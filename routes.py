@@ -1,3 +1,5 @@
+import stripe
+import logging
 from flask import render_template, flash, redirect, url_for, request, jsonify
 from flask_login import current_user, login_user, logout_user, login_required
 from urllib.parse import urlparse
@@ -7,7 +9,6 @@ from forms import LoginForm, RegistrationForm, ScriptGenerationForm, PostForm, C
 from werkzeug.utils import secure_filename
 import os
 from datetime import datetime, timedelta
-import stripe
 from chat_request import send_openai_request
 
 stripe.api_key = app.config['STRIPE_SECRET_KEY']
@@ -66,6 +67,10 @@ def profile():
 @app.route('/generate_script', methods=['GET', 'POST'])
 @login_required
 def generate_script():
+    if current_user.scripts_generated is None:
+        current_user.scripts_generated = 0
+        db.session.commit()
+    
     if current_user.is_paid or current_user.scripts_generated < 2:
         form = ScriptGenerationForm()
         if form.validate_on_submit():
@@ -117,6 +122,7 @@ def create_checkout_session():
         )
         return jsonify({'id': checkout_session.id})
     except Exception as e:
+        logging.error(f"Error creating checkout session: {str(e)}")
         return jsonify(error=str(e)), 403
 
 @app.route('/subscribe/success')
@@ -134,8 +140,10 @@ def stripe_webhook():
             payload, sig_header, app.config['STRIPE_WEBHOOK_SECRET']
         )
     except ValueError as e:
+        logging.error(f"Invalid payload: {str(e)}")
         return 'Invalid payload', 400
     except stripe.error.SignatureVerificationError as e:
+        logging.error(f"Invalid signature: {str(e)}")
         return 'Invalid signature', 400
 
     if event['type'] == 'checkout.session.completed':
@@ -158,6 +166,9 @@ def fulfill_order(session):
         )
         db.session.add(subscription)
         db.session.commit()
+        logging.info(f"Subscription created for user {user_id}")
+    else:
+        logging.error(f"User not found for id {user_id}")
 
 @app.route('/community', methods=['GET', 'POST'])
 @login_required
