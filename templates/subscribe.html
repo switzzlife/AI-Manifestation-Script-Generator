@@ -3,6 +3,11 @@
 {% block content %}
 <div class="container mt-5">
     <h1 class="mb-4">Subscribe to Premium</h1>
+    {% if request.args.get('next') == 'generate_script' %}
+    <div class="alert alert-info" role="alert">
+        To generate manifestation scripts, you need to subscribe to our premium plan. Unlock unlimited script generation and more features!
+    </div>
+    {% endif %}
     <div class="row">
         <div class="col-md-6 offset-md-3">
             <div class="card">

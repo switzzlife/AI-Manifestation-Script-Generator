@@ -70,8 +70,9 @@ def profile():
 @login_required
 def generate_script():
     if not current_user.is_paid:
-        flash('You need a paid subscription to generate scripts.')
-        return redirect(url_for('subscribe'))
+        flash('You need a paid subscription to generate scripts. Please subscribe to access this feature.', 'warning')
+        return redirect(url_for('subscribe', next='generate_script'))
+    
     form = ScriptGenerationForm()
     if form.validate_on_submit():
         prompt = f"""Generate a manifestation script for {form.goal.data} with the following characteristics:
@@ -89,10 +90,10 @@ def generate_script():
             script = Script(content=script_content, author=current_user)
             db.session.add(script)
             db.session.commit()
-            flash('Your manifestation script has been generated and saved!')
+            flash('Your manifestation script has been generated and saved!', 'success')
             return redirect(url_for('view_script', script_id=script.id))
         except Exception as e:
-            flash(f'An error occurred while generating the script: {str(e)}')
+            flash(f'An error occurred while generating the script: {str(e)}', 'error')
             return redirect(url_for('generate_script'))
     return render_template('generate_script.html', form=form)
 
@@ -140,7 +141,8 @@ def add_comment(post_id):
 @app.route('/subscribe')
 @login_required
 def subscribe():
-    return render_template('subscribe.html')
+    next_page = request.args.get('next')
+    return render_template('subscribe.html', next_page=next_page)
 
 @app.route('/create-checkout-session', methods=['POST'])
 @login_required
