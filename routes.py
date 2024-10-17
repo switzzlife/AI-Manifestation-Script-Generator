@@ -174,6 +174,7 @@ def fulfill_order(session):
 @login_required
 def community():
     form = PostForm()
+    comment_form = CommentForm()
     if form.validate_on_submit():
         post = Post(title=form.title.data, content=form.content.data, author=current_user)
         db.session.add(post)
@@ -182,7 +183,7 @@ def community():
         return redirect(url_for('community'))
     
     posts = Post.query.order_by(Post.created_at.desc()).all()
-    return render_template('community.html', title='Community', form=form, posts=posts)
+    return render_template('community.html', title='Community', form=form, comment_form=comment_form, posts=posts)
 
 @app.route('/create_post', methods=['POST'])
 @login_required
