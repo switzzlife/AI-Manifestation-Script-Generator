@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">My Audio Files</h1>
+    {% if scripts %}
+        <div class="row">
+        {% for script in scripts %}
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Script #{{ script.id }}</h5>
+                        <p class="card-text"><small class="text-muted">Generated on: {{ script.created_at.strftime('%Y-%m-%d %H:%M') }}</small></p>
+                        <audio controls class="w-100 mb-3">
+                            <source src="{{ url_for('get_audio', script_id=script.id) }}" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                        <a href="{{ url_for('get_audio', script_id=script.id) }}" class="btn btn-primary" download>Download Audio</a>
+                        <a href="{{ url_for('view_script', script_id=script.id) }}" class="btn btn-secondary">View Script</a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+        </div>
+    {% else %}
+        <p>You don't have any audio files yet. <a href="{{ url_for('generate_script') }}">Generate a script with audio!</a></p>
+    {% endif %}
+</div>
+{% endblock %}

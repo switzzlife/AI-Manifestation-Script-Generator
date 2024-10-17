@@ -241,6 +241,12 @@ def add_comment(post_id):
         return jsonify({'success': True})
     return jsonify({'success': False, 'errors': form.errors}), 400
 
+@app.route('/my_audio_files')
+@login_required
+def my_audio_files():
+    scripts_with_audio = Script.query.filter_by(user_id=current_user.id).filter(Script.audio_file.isnot(None)).order_by(Script.created_at.desc()).all()
+    return render_template('my_audio_files.html', title='My Audio Files', scripts=scripts_with_audio)
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
