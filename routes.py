@@ -1,7 +1,7 @@
 from flask import render_template, flash, redirect, url_for, request, jsonify
 from flask_login import current_user, login_user, logout_user, login_required
-from werkzeug.urls import url_parse
-from app import app, db
+from urllib.parse import urlparse
+from app import app, db, login_manager
 from models import User, Script, Post, Comment, Subscription
 from forms import LoginForm, RegistrationForm, ScriptGenerationForm, PostForm, CommentForm
 from werkzeug.utils import secure_filename
@@ -29,7 +29,7 @@ def login():
             return redirect(url_for('login'))
         login_user(user, remember=form.remember_me.data)
         next_page = request.args.get('next')
-        if not next_page or url_parse(next_page).netloc != '':
+        if not next_page or urlparse(next_page).netloc != '':
             next_page = url_for('index')
         return redirect(next_page)
     return render_template('login.html', title='Sign In', form=form)
