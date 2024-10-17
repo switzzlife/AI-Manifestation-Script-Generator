@@ -59,7 +59,7 @@ def register():
 @app.route('/profile')
 @login_required
 def profile():
-    scripts = current_user.scripts.all()
+    scripts = current_user.scripts.order_by(Script.created_at.desc()).all()
     return render_template('profile.html', user=current_user, scripts=scripts)
 
 @app.route('/generate_script', methods=['GET', 'POST'])
@@ -67,14 +67,27 @@ def profile():
 def generate_script():
     form = ScriptGenerationForm()
     if form.validate_on_submit():
-        prompt = f"Generate a manifestation script for {form.goal.data} with a focus on {form.focus.data} and a duration of {form.duration.data} minutes."
-        script_content = send_openai_request(prompt)
-        script = Script(content=script_content, author=current_user)
-        db.session.add(script)
-        db.session.commit()
-        flash('Your script has been generated and saved!')
-        return redirect(url_for('profile'))
+        prompt = f"Generate a manifestation script for {form.goal.data} with a focus on {form.focus.data} and a duration of {form.duration.data} minutes. The script should be inspiring, positive, and tailored to the user's specific goal. Include affirmations and visualizations related to the goal."
+        try:
+            script_content = send_openai_request(prompt)
+            script = Script(content=script_content, author=current_user)
+            db.session.add(script)
+            db.session.commit()
+            flash('Your manifestation script has been generated and saved!')
+            return redirect(url_for('view_script', script_id=script.id))
+        except Exception as e:
+            flash(f'An error occurred while generating the script: {str(e)}')
+            return redirect(url_for('generate_script'))
     return render_template('generate_script.html', form=form)
+
+@app.route('/view_script/<int:script_id>')
+@login_required
+def view_script(script_id):
+    script = Script.query.get_or_404(script_id)
+    if script.author != current_user:
+        flash('You do not have permission to view this script.')
+        return redirect(url_for('profile'))
+    return render_template('view_script.html', script=script)
 
 @app.route('/community')
 @login_required
