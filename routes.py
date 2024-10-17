@@ -88,15 +88,19 @@ def generate_script():
             
             if form.generate_audio.data:
                 try:
-                    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_audio_file:
-                        audio_response = openai.audio.speech.create(
-                            model="tts-1",
-                            voice="alloy",
-                            input=script_content
-                        )
-                        audio_response.stream_to_file(temp_audio_file.name)
+                    audio_filename = f"audio_{script.id}.mp3"
+                    audio_path = os.path.join(app.config['UPLOAD_FOLDER'], audio_filename)
                     
-                    script.audio_file = os.path.basename(temp_audio_file.name)
+                    audio_response = openai.audio.speech.create(
+                        model="tts-1",
+                        voice="alloy",
+                        input=script_content
+                    )
+                    
+                    with open(audio_path, "wb") as audio_file:
+                        audio_file.write(audio_response.content)
+                    
+                    script.audio_file = audio_filename
                     db.session.commit()
                     
                     return redirect(url_for('view_script', script_id=script.id, audio=True))
@@ -127,7 +131,12 @@ def get_audio(script_id):
         flash('You do not have permission to access this audio.', 'error')
         return redirect(url_for('profile'))
     if script.audio_file:
-        return send_file(os.path.join(app.config['UPLOAD_FOLDER'], script.audio_file), as_attachment=True)
+        audio_path = os.path.join(app.config['UPLOAD_FOLDER'], script.audio_file)
+        if os.path.exists(audio_path):
+            return send_file(audio_path, as_attachment=True)
+        else:
+            flash('Audio file not found.', 'error')
+            return redirect(url_for('view_script', script_id=script_id))
     else:
         flash('No audio file available for this script.', 'error')
         return redirect(url_for('view_script', script_id=script_id))
