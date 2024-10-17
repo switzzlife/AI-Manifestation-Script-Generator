@@ -35,6 +35,7 @@ class Script(db.Model):
     content = db.Column(db.Text, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    audio_file = db.Column(db.String(255))  # New field for audio file
 
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)

@@ -1,6 +1,6 @@
 import stripe
 import logging
-from flask import render_template, flash, redirect, url_for, request, jsonify
+from flask import render_template, flash, redirect, url_for, request, jsonify, send_file
 from flask_login import current_user, login_user, logout_user, login_required
 from urllib.parse import urlparse
 from app import app, db, login_manager
@@ -10,8 +10,11 @@ from werkzeug.utils import secure_filename
 import os
 from datetime import datetime, timedelta
 from chat_request import send_openai_request
+import openai
+import tempfile
 
 stripe.api_key = app.config['STRIPE_SECRET_KEY']
+openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 @app.route('/')
 @app.route('/index')
@@ -46,7 +49,7 @@ def register():
         return redirect(url_for('index'))
     form = RegistrationForm()
     if form.validate_on_submit():
-        user = User(username=form.username.data, email=form.email.data)
+        user = User(username=form.username.data, email=form.email.data, profile_photo='default.jpg')
         user.set_password(form.password.data)
         if form.profile_photo.data:
             filename = secure_filename(form.profile_photo.data.filename)
@@ -77,11 +80,29 @@ def generate_script():
             prompt = f"Generate a {form.duration.data}-minute manifestation script for {form.goal.data}. Focus on {form.focus.data}. Use a {form.tone.data} tone, incorporate {form.visualization.data} visualization, and use {form.affirmation_style.data} affirmations."
             script_content = send_openai_request(prompt)
             
-            script = Script(content=script_content, author=current_user)
+            script = Script(content=script_content, user_id=current_user.id)
             db.session.add(script)
             
             current_user.scripts_generated += 1
             db.session.commit()
+            
+            if form.generate_audio.data:
+                try:
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_audio_file:
+                        audio_response = openai.audio.speech.create(
+                            model="tts-1",
+                            voice="alloy",
+                            input=script_content
+                        )
+                        audio_response.stream_to_file(temp_audio_file.name)
+                    
+                    script.audio_file = os.path.basename(temp_audio_file.name)
+                    db.session.commit()
+                    
+                    return redirect(url_for('view_script', script_id=script.id, audio=True))
+                except Exception as e:
+                    flash(f"Error generating audio: {str(e)}", "error")
+                    return redirect(url_for('view_script', script_id=script.id))
             
             return redirect(url_for('view_script', script_id=script.id))
         return render_template('generate_script.html', title='Generate Script', form=form)
@@ -97,6 +118,19 @@ def view_script(script_id):
         flash('You do not have permission to view this script.', 'error')
         return redirect(url_for('profile'))
     return render_template('view_script.html', title='View Script', script=script)
+
+@app.route('/get_audio/<int:script_id>')
+@login_required
+def get_audio(script_id):
+    script = Script.query.get_or_404(script_id)
+    if script.author != current_user:
+        flash('You do not have permission to access this audio.', 'error')
+        return redirect(url_for('profile'))
+    if script.audio_file:
+        return send_file(os.path.join(app.config['UPLOAD_FOLDER'], script.audio_file), as_attachment=True)
+    else:
+        flash('No audio file available for this script.', 'error')
+        return redirect(url_for('view_script', script_id=script_id))
 
 @app.route('/subscribe')
 @login_required
@@ -176,7 +210,7 @@ def community():
     form = PostForm()
     comment_form = CommentForm()
     if form.validate_on_submit():
-        post = Post(title=form.title.data, content=form.content.data, author=current_user)
+        post = Post(title=form.title.data, content=form.content.data, user_id=current_user.id)
         db.session.add(post)
         db.session.commit()
         flash('Your post has been created!', 'success')
@@ -190,7 +224,7 @@ def community():
 def create_post():
     form = PostForm()
     if form.validate_on_submit():
-        post = Post(title=form.title.data, content=form.content.data, author=current_user)
+        post = Post(title=form.title.data, content=form.content.data, user_id=current_user.id)
         db.session.add(post)
         db.session.commit()
         return jsonify({'success': True})
@@ -201,7 +235,7 @@ def create_post():
 def add_comment(post_id):
     form = CommentForm()
     if form.validate_on_submit():
-        comment = Comment(content=form.content.data, author=current_user, post_id=post_id)
+        comment = Comment(content=form.content.data, user_id=current_user.id, post_id=post_id)
         db.session.add(comment)
         db.session.commit()
         return jsonify({'success': True})
