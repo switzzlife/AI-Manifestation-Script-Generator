@@ -34,10 +34,6 @@
     var checkoutButton = document.getElementById('checkout-button');
 
     checkoutButton.addEventListener('click', function() {
-        // Disable the button and show a loading indicator
-        checkoutButton.disabled = true;
-        checkoutButton.textContent = 'Loading...';
-
         fetch('/create-checkout-session', {
             method: 'POST',
         })
@@ -45,29 +41,15 @@
             return response.json();
         })
         .then(function(session) {
-            if (session.error) {
-                // If there's an error, display it and re-enable the button
-                alert(session.error);
-                checkoutButton.disabled = false;
-                checkoutButton.textContent = 'Subscribe Now';
-            } else {
-                return stripe.redirectToCheckout({ sessionId: session.id });
-            }
+            return stripe.redirectToCheckout({ sessionId: session.id });
         })
         .then(function(result) {
-            if (result && result.error) {
+            if (result.error) {
                 alert(result.error.message);
-                // Re-enable the button if there's an error
-                checkoutButton.disabled = false;
-                checkoutButton.textContent = 'Subscribe Now';
             }
         })
         .catch(function(error) {
             console.error('Error:', error);
-            alert('An error occurred. Please try again.');
-            // Re-enable the button if there's an error
-            checkoutButton.disabled = false;
-            checkoutButton.textContent = 'Subscribe Now';
         });
     });
 </script>

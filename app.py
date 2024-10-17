@@ -1,9 +1,16 @@
 import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
 from flask_login import LoginManager
-from config import Config
+from sqlalchemy.orm import DeclarativeBase
+from flask_migrate import Migrate
+
+class Base(DeclarativeBase):
+    pass
+
+db = SQLAlchemy(model_class=Base)
+login_manager = LoginManager()
+migrate = Migrate()
 
 app = Flask(__name__)
 app.config.from_object('config.Config')
@@ -12,23 +19,17 @@ app.config.from_object('config.Config')
 app.config['STRIPE_PUBLIC_KEY'] = os.environ.get('STRIPE_PUBLIC_KEY')
 app.config['STRIPE_SECRET_KEY'] = os.environ.get('STRIPE_SECRET_KEY')
 app.config['STRIPE_WEBHOOK_SECRET'] = os.environ.get('STRIPE_WEBHOOK_SECRET')
-app.config['STRIPE_PRICE_ID'] = os.environ.get('STRIPE_PRICE_ID')
+app.config['STRIPE_PRICE_ID'] = os.environ.get('STRIPE_PRICE_ID')  # Add this line
 
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)
-login_manager = LoginManager(app)
+db.init_app(app)
+login_manager.init_app(app)
+migrate.init_app(app, db)
 login_manager.login_view = 'login'
 
 # Configure upload folder
 app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
-
-from models import User
-
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
 
 with app.app_context():
     import models
