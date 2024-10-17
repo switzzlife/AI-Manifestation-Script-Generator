@@ -8,6 +8,7 @@ from models import User, Script, Post, Comment, Subscription
 from forms import LoginForm, RegistrationForm, ScriptGenerationForm, PostForm, CommentForm
 from chat_request import send_openai_request
 import stripe
+from datetime import datetime
 
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
 
@@ -73,7 +74,16 @@ def generate_script():
         return redirect(url_for('subscribe'))
     form = ScriptGenerationForm()
     if form.validate_on_submit():
-        prompt = f"Generate a manifestation script for {form.goal.data} with a focus on {form.focus.data} and a duration of {form.duration.data} minutes. The script should be inspiring, positive, and tailored to the user's specific goal. Include affirmations and visualizations related to the goal."
+        prompt = f"""Generate a manifestation script for {form.goal.data} with the following characteristics:
+        - Focus: {form.focus.data}
+        - Duration: {form.duration.data} minutes
+        - Tone: {form.tone.data}
+        - Visualization Type: {form.visualization.data}
+        - Affirmation Style: {form.affirmation_style.data}
+
+        The script should be inspiring, positive, and tailored to the user's specific goal. 
+        Include affirmations and visualizations related to the goal, keeping in mind the chosen tone, visualization type, and affirmation style."""
+        
         try:
             script_content = send_openai_request(prompt)
             script = Script(content=script_content, author=current_user)

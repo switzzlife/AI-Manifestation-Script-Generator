@@ -1,30 +1,53 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Generate Manifestation Script</h1>
-<form action="" method="post" novalidate>
-    {{ form.hidden_tag() }}
-    <div class="mb-3">
-        {{ form.goal.label(class="form-label") }}
-        {{ form.goal(class="form-control") }}
-        {% for error in form.goal.errors %}
-        <span class="text-danger">{{ error }}</span>
-        {% endfor %}
-    </div>
-    <div class="mb-3">
-        {{ form.focus.label(class="form-label") }}
-        {{ form.focus(class="form-select") }}
-        {% for error in form.focus.errors %}
-        <span class="text-danger">{{ error }}</span>
-        {% endfor %}
-    </div>
-    <div class="mb-3">
-        {{ form.duration.label(class="form-label") }}
-        {{ form.duration(class="form-select") }}
-        {% for error in form.duration.errors %}
-        <span class="text-danger">{{ error }}</span>
-        {% endfor %}
-    </div>
-    {{ form.submit(class="btn btn-primary") }}
-</form>
+<div class="container mt-4">
+    <h1>Generate Manifestation Script</h1>
+    <form action="" method="post" novalidate>
+        {{ form.hidden_tag() }}
+        <div class="mb-3">
+            {{ form.goal.label(class="form-label") }}
+            {{ form.goal(class="form-control") }}
+            {% for error in form.goal.errors %}
+            <span class="text-danger">{{ error }}</span>
+            {% endfor %}
+        </div>
+        <div class="mb-3">
+            {{ form.focus.label(class="form-label") }}
+            {{ form.focus(class="form-select") }}
+            {% for error in form.focus.errors %}
+            <span class="text-danger">{{ error }}</span>
+            {% endfor %}
+        </div>
+        <div class="mb-3">
+            {{ form.duration.label(class="form-label") }}
+            {{ form.duration(class="form-select") }}
+            {% for error in form.duration.errors %}
+            <span class="text-danger">{{ error }}</span>
+            {% endfor %}
+        </div>
+        <div class="mb-3">
+            {{ form.tone.label(class="form-label") }}
+            {{ form.tone(class="form-select") }}
+            {% for error in form.tone.errors %}
+            <span class="text-danger">{{ error }}</span>
+            {% endfor %}
+        </div>
+        <div class="mb-3">
+            {{ form.visualization.label(class="form-label") }}
+            {{ form.visualization(class="form-select") }}
+            {% for error in form.visualization.errors %}
+            <span class="text-danger">{{ error }}</span>
+            {% endfor %}
+        </div>
+        <div class="mb-3">
+            {{ form.affirmation_style.label(class="form-label") }}
+            {{ form.affirmation_style(class="form-select") }}
+            {% for error in form.affirmation_style.errors %}
+            <span class="text-danger">{{ error }}</span>
+            {% endfor %}
+        </div>
+        {{ form.submit(class="btn btn-primary") }}
+    </form>
+</div>
 {% endblock %}
