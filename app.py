@@ -13,6 +13,11 @@ login_manager = LoginManager()
 app = Flask(__name__)
 app.config.from_object('config.Config')
 
+# Stripe configuration
+app.config['STRIPE_PUBLIC_KEY'] = os.environ.get('STRIPE_PUBLIC_KEY')
+app.config['STRIPE_SECRET_KEY'] = os.environ.get('STRIPE_SECRET_KEY')
+app.config['STRIPE_WEBHOOK_SECRET'] = os.environ.get('STRIPE_WEBHOOK_SECRET')
+
 db.init_app(app)
 login_manager.init_app(app)
 login_manager.login_view = 'login'

@@ -4,9 +4,12 @@ from flask_login import login_user, login_required, logout_user, current_user
 from urllib.parse import urlparse
 from werkzeug.utils import secure_filename
 from app import app, db, login_manager
-from models import User, Script, Post, Comment
+from models import User, Script, Post, Comment, Subscription
 from forms import LoginForm, RegistrationForm, ScriptGenerationForm, PostForm, CommentForm
 from chat_request import send_openai_request
+import stripe
+
+stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
 
 @login_manager.user_loader
 def load_user(id):
@@ -65,6 +68,9 @@ def profile():
 @app.route('/generate_script', methods=['GET', 'POST'])
 @login_required
 def generate_script():
+    if not current_user.is_paid:
+        flash('You need a paid subscription to generate scripts.')
+        return redirect(url_for('subscribe'))
     form = ScriptGenerationForm()
     if form.validate_on_submit():
         prompt = f"Generate a manifestation script for {form.goal.data} with a focus on {form.focus.data} and a duration of {form.duration.data} minutes. The script should be inspiring, positive, and tailored to the user's specific goal. Include affirmations and visualizations related to the goal."
@@ -120,3 +126,78 @@ def add_comment(post_id):
         flash('Your comment has been added!')
         return redirect(url_for('community'))
     return redirect(url_for('community'))
+
+@app.route('/subscribe')
+@login_required
+def subscribe():
+    return render_template('subscribe.html')
+
+@app.route('/create-checkout-session', methods=['POST'])
+@login_required
+def create_checkout_session():
+    try:
+        checkout_session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[
+                {
+                    'price': os.environ.get('STRIPE_PRICE_ID'),
+                    'quantity': 1,
+                },
+            ],
+            mode='subscription',
+            success_url=url_for('subscribe_success', _external=True) + '?session_id={CHECKOUT_SESSION_ID}',
+            cancel_url=url_for('subscribe', _external=True),
+            client_reference_id=current_user.id,
+        )
+        return jsonify({'id': checkout_session.id})
+    except Exception as e:
+        return jsonify(error=str(e)), 403
+
+@app.route('/subscribe/success')
+@login_required
+def subscribe_success():
+    session_id = request.args.get('session_id')
+    if session_id:
+        try:
+            session = stripe.checkout.Session.retrieve(session_id)
+            if session.client_reference_id == str(current_user.id):
+                subscription = Subscription(
+                    user_id=current_user.id,
+                    stripe_customer_id=session.customer,
+                    stripe_subscription_id=session.subscription,
+                    active=True,
+                    current_period_end=datetime.fromtimestamp(session.expires_at)
+                )
+                current_user.is_paid = True
+                db.session.add(subscription)
+                db.session.commit()
+                flash('Thank you for subscribing!')
+            else:
+                flash('Invalid session ID')
+        except Exception as e:
+            flash(f'An error occurred: {str(e)}')
+    return redirect(url_for('profile'))
+
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    payload = request.get_data(as_text=True)
+    sig_header = request.headers.get('Stripe-Signature')
+
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, os.environ.get('STRIPE_WEBHOOK_SECRET')
+        )
+    except ValueError as e:
+        return 'Invalid payload', 400
+    except stripe.error.SignatureVerificationError as e:
+        return 'Invalid signature', 400
+
+    if event['type'] == 'customer.subscription.deleted':
+        subscription = event['data']['object']
+        user_subscription = Subscription.query.filter_by(stripe_subscription_id=subscription['id']).first()
+        if user_subscription:
+            user_subscription.active = False
+            user_subscription.user.is_paid = False
+            db.session.commit()
+
+    return '', 200
