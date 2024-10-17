@@ -19,6 +19,10 @@ args = "Start Flask App"
 task = "workflow.run"
 args = "Create Test User"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Update Testuser"
+
 [[workflows.workflow]]
 name = "Start Flask App"
 author = "agent"
@@ -41,6 +45,17 @@ agentRequireRestartOnSave = false
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python create_test_user.py"
+
+[[workflows.workflow]]
+name = "Update Testuser"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python update_testuser.py"
 
 [deployment]
 run = ["sh", "-c", "python main.py"]

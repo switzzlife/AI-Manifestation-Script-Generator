@@ -1,0 +1,26 @@
+Test Instructions for Script Generation:
+
+1. Login as testuser:
+   - Go to the login page (/login)
+   - Enter username: testuser
+   - Enter password: testpassword
+
+2. Generate the first script:
+   - Navigate to the Generate Script page (/generate_script)
+   - Fill out the form with your desired options
+   - Click "Generate Script"
+   - Verify that the script is generated successfully
+
+3. Generate the second script:
+   - Repeat the process in step 2
+   - Verify that the second script is generated successfully
+
+4. Attempt to generate a third script:
+   - Try to generate a script for the third time
+   - You should be redirected to the subscription page
+
+5. Verify script count:
+   - Go to your profile page (/profile)
+   - Check that you have two generated scripts listed
+
+Please follow these steps and report any issues or unexpected behavior.
