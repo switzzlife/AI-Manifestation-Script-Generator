@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="jumbotron text-center">
+    <h1 class="display-4">Welcome to AI Manifestation Script Generator</h1>
+    <p class="lead">Harness the power of AI to create personalized manifestation scripts and achieve your goals.</p>
+    {% if not current_user.is_authenticated %}
+        <hr class="my-4">
+        <p>Get started by creating an account or logging in.</p>
+        <a class="btn btn-primary btn-lg" href="{{ url_for('register') }}" role="button">Register</a>
+        <a class="btn btn-secondary btn-lg" href="{{ url_for('login') }}" role="button">Login</a>
+    {% else %}
+        <hr class="my-4">
+        <p>Ready to manifest your dreams?</p>
+        <a class="btn btn-primary btn-lg" href="{{ url_for('generate_script') }}" role="button">Generate a Script</a>
+    {% endif %}
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <h2>Personalized Scripts</h2>
+        <p>Our AI-powered system creates unique manifestation scripts tailored to your specific goals and needs.</p>
+    </div>
+    <div class="col-md-4">
+        <h2>Community Support</h2>
+        <p>Connect with like-minded individuals in our community board to share experiences and support each other.</p>
+    </div>
+    <div class="col-md-4">
+        <h2>Track Your Progress</h2>
+        <p>Save and review your generated scripts to monitor your manifestation journey over time.</p>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+/* Custom styles to complement Bootstrap */
+body {
+    padding-top: 60px;
+}
+
+.profile-photo {
+    max-width: 150px;
+    max-height: 150px;
+    border-radius: 50%;
+}
+
+.script-card {
+    margin-bottom: 20px;
+}
+
+.community-post {
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.25rem;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.comment {
+    margin-left: 20px;
+    border-left: 3px solid var(--bs-border-color);
+    padding-left: 10px;
+}

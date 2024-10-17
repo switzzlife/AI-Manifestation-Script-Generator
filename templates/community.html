@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Community Board</h1>
+
+<div class="mb-4">
+    <h3>Create a New Post</h3>
+    <form id="post-form" method="post" action="{{ url_for('create_post') }}">
+        {{ form.hidden_tag() }}
+        <div class="mb-3">
+            {{ form.title.label(class="form-label") }}
+            {{ form.title(class="form-control") }}
+        </div>
+        <div class="mb-3">
+            {{ form.content.label(class="form-label") }}
+            {{ form.content(class="form-control") }}
+        </div>
+        {{ form.submit(class="btn btn-primary") }}
+    </form>
+</div>
+
+<div id="posts-container">
+    {% for post in posts %}
+        <div class="community-post">
+            <h3>{{ post.title }}</h3>
+            <p>{{ post.content }}</p>
+            <small>Posted by {{ post.author.username }} on {{ post.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+            
+            <div class="comments mt-3">
+                <h4>Comments</h4>
+                {% for comment in post.comments %}
+                    <div class="comment">
+                        <p>{{ comment.content }}</p>
+                        <small>Commented by {{ comment.author.username }} on {{ comment.created_at.strftime('%Y-%m-d %H:%M') }}</small>
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <form class="comment-form mt-3" data-post-id="{{ post.id }}" method="post" action="{{ url_for('add_comment', post_id=post.id) }}">
+                {{ comment_form.hidden_tag() }}
+                <div class="mb-3">
+                    {{ comment_form.content.label(class="form-label") }}
+                    {{ comment_form.content(class="form-control") }}
+                </div>
+                {{ comment_form.submit(class="btn btn-secondary") }}
+            </form>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/community.js') }}"></script>
+{% endblock %}
