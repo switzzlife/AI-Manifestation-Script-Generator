@@ -1,14 +1,21 @@
-import os
-from flask import render_template, redirect, url_for, flash, request, jsonify
-from flask_login import login_user, login_required, logout_user, current_user
-from urllib.parse import urlparse, urljoin
-from werkzeug.utils import secure_filename
-from app import app, db, login_manager
+from flask import render_template, flash, redirect, url_for, request, jsonify
+from flask_login import current_user, login_user, logout_user, login_required
+from werkzeug.urls import url_parse
+from app import app, db
 from models import User, Script, Post, Comment, Subscription
 from forms import LoginForm, RegistrationForm, ScriptGenerationForm, PostForm, CommentForm
-from chat_request import send_openai_request
-import stripe
+from werkzeug.utils import secure_filename
+import os
 from datetime import datetime, timedelta
+import stripe
+from chat_request import send_openai_request
+
+stripe.api_key = app.config['STRIPE_SECRET_KEY']
+
+@app.route('/')
+@app.route('/index')
+def index():
+    return render_template('index.html', title='Home')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -18,19 +25,14 @@ def login():
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
         if user is None or not user.check_password(form.password.data):
-            flash('Invalid username or password', 'error')
+            flash('Invalid username or password')
             return redirect(url_for('login'))
         login_user(user, remember=form.remember_me.data)
         next_page = request.args.get('next')
-        if not next_page or not is_safe_url(next_page):
+        if not next_page or url_parse(next_page).netloc != '':
             next_page = url_for('index')
         return redirect(next_page)
     return render_template('login.html', title='Sign In', form=form)
-
-def is_safe_url(target):
-    ref_url = urlparse(request.host_url)
-    test_url = urlparse(urljoin(request.host_url, target))
-    return test_url.scheme in ('http', 'https') and ref_url.netloc == test_url.netloc
 
 @app.route('/logout')
 def logout():
@@ -51,13 +53,9 @@ def register():
             user.profile_photo = filename
         db.session.add(user)
         db.session.commit()
-        flash('Congratulations, you are now a registered user!', 'success')
+        flash('Congratulations, you are now a registered user!')
         return redirect(url_for('login'))
     return render_template('register.html', title='Register', form=form)
-
-@app.route('/')
-def index():
-    return render_template('index.html')
 
 @app.route('/profile')
 @login_required
@@ -68,34 +66,32 @@ def profile():
 @app.route('/generate_script', methods=['GET', 'POST'])
 @login_required
 def generate_script():
-    if not current_user.is_paid:
-        flash('You need to subscribe to generate scripts.', 'warning')
-        return redirect(url_for('subscribe', next='generate_script'))
-    
-    form = ScriptGenerationForm()
-    if form.validate_on_submit():
-        prompt = f"Generate a manifestation script for the following goal: {form.goal.data}. Focus on {form.focus.data}. The script should be {form.duration.data} minutes long, with a {form.tone.data} tone. Use {form.visualization.data} visualization and {form.affirmation_style.data} affirmations."
-        
-        try:
-            generated_script = send_openai_request(prompt)
-            new_script = Script(content=generated_script, user_id=current_user.id)
-            db.session.add(new_script)
+    if current_user.is_paid or current_user.scripts_generated < 2:
+        form = ScriptGenerationForm()
+        if form.validate_on_submit():
+            prompt = f"Generate a {form.duration.data}-minute manifestation script for {form.goal.data}. Focus on {form.focus.data}. Use a {form.tone.data} tone, incorporate {form.visualization.data} visualization, and use {form.affirmation_style.data} affirmations."
+            script_content = send_openai_request(prompt)
+            
+            script = Script(content=script_content, author=current_user)
+            db.session.add(script)
+            
+            current_user.scripts_generated += 1
             db.session.commit()
-            return redirect(url_for('view_script', script_id=new_script.id))
-        except Exception as e:
-            flash(f'Error generating script: {str(e)}', 'error')
-            return redirect(url_for('generate_script'))
-    
-    return render_template('generate_script.html', form=form)
+            
+            return redirect(url_for('view_script', script_id=script.id))
+        return render_template('generate_script.html', title='Generate Script', form=form)
+    else:
+        flash('You have reached the limit of free script generations. Please subscribe to continue.', 'warning')
+        return redirect(url_for('subscribe', next='generate_script'))
 
 @app.route('/view_script/<int:script_id>')
 @login_required
 def view_script(script_id):
     script = Script.query.get_or_404(script_id)
-    if script.user_id != current_user.id:
+    if script.author != current_user:
         flash('You do not have permission to view this script.', 'error')
         return redirect(url_for('profile'))
-    return render_template('view_script.html', script=script)
+    return render_template('view_script.html', title='View Script', script=script)
 
 @app.route('/subscribe')
 @login_required
