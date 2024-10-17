@@ -34,9 +34,6 @@
     var checkoutButton = document.getElementById('checkout-button');
 
     checkoutButton.addEventListener('click', function() {
-        // Disable the button to prevent multiple clicks
-        checkoutButton.disabled = true;
-        
         fetch('/create-checkout-session', {
             method: 'POST',
         })
@@ -44,28 +41,15 @@
             return response.json();
         })
         .then(function(session) {
-            if (session.error) {
-                // If there's an error, display it to the user
-                throw new Error(session.error);
-            } else if (session.sessionId) {
-                // If we have a session ID, redirect to Stripe Checkout
-                return stripe.redirectToCheckout({ sessionId: session.sessionId });
-            } else {
-                throw new Error('Invalid response from server');
-            }
+            return stripe.redirectToCheckout({ sessionId: session.id });
         })
         .then(function(result) {
-            if (result && result.error) {
-                // If `redirectToCheckout` fails due to a browser or network
-                // error, display the localized error message to your customer.
-                throw new Error(result.error.message);
+            if (result.error) {
+                alert(result.error.message);
             }
         })
         .catch(function(error) {
-            // Re-enable the button in case of error
-            checkoutButton.disabled = false;
             console.error('Error:', error);
-            alert('An error occurred: ' + error.message);
         });
     });
 </script>
