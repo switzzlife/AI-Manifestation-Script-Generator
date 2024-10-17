@@ -8,6 +8,7 @@
         <p>Email: {{ current_user.email }}</p>
         <p>Account Type: {% if current_user.is_paid %}Premium{% else %}Free{% endif %}</p>
         {% if not current_user.is_paid %}
+            <p>Free scripts remaining: {{ 2 - current_user.free_scripts_count }}</p>
             <a href="{{ url_for('subscribe') }}" class="btn btn-primary">Upgrade to Premium</a>
         {% endif %}
     </div>
@@ -20,22 +21,7 @@
                         <h5 class="card-title">Script #{{ script.id }}</h5>
                         <p class="card-text">{{ script.content[:200] }}...</p>
                         <p class="card-text"><small class="text-muted">Generated on: {{ script.created_at.strftime('%Y-%m-%d %H:%M') }}</small></p>
-                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#scriptModal{{ script.id }}">View Full Script</button>
-                    </div>
-                </div>
-
-                <!-- Modal for full script -->
-                <div class="modal fade" id="scriptModal{{ script.id }}" tabindex="-1" aria-labelledby="scriptModalLabel{{ script.id }}" aria-hidden="true">
-                    <div class="modal-dialog modal-lg">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="scriptModalLabel{{ script.id }}">Full Script #{{ script.id }}</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                {{ script.content }}
-                            </div>
-                        </div>
+                        <a href="{{ url_for('view_script', script_id=script.id) }}" class="btn btn-primary">View Full Script</a>
                     </div>
                 </div>
             {% endfor %}

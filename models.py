@@ -1,4 +1,4 @@
-from app import db
+from __init__ import db
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
@@ -10,6 +10,7 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(256), nullable=False)
     profile_photo = db.Column(db.String(255), nullable=False)
     is_paid = db.Column(db.Boolean, default=False)
+    free_scripts_count = db.Column(db.Integer, default=0)
     subscription = db.relationship('Subscription', backref='user', uselist=False)
     scripts = db.relationship('Script', backref='author', lazy='dynamic')
     posts = db.relationship('Post', backref='author', lazy='dynamic')
