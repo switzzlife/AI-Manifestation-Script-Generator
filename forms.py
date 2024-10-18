@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField, SelectField
-from wtforms.validators import DataRequired, Email, EqualTo, ValidationError, Length
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField, SelectField, FloatField
+from wtforms.validators import DataRequired, Email, EqualTo, ValidationError, Length, NumberRange
 from flask_wtf.file import FileField, FileRequired, FileAllowed
 from models import User
 
@@ -46,3 +46,15 @@ class PostForm(FlaskForm):
 class CommentForm(FlaskForm):
     content = TextAreaField('Comment', validators=[DataRequired()])
     submit = SubmitField('Add Comment')
+
+class AudioCustomizationForm(FlaskForm):
+    script = SelectField('Select Script', validators=[DataRequired()])
+    background_music = SelectField('Background Music', choices=[
+        ('nature', 'Nature Sounds'),
+        ('meditation', 'Meditation Music'),
+        ('ambient', 'Ambient Sounds'),
+        ('none', 'No Background Music')
+    ], validators=[DataRequired()])
+    volume = FloatField('Volume', validators=[DataRequired(), NumberRange(min=0, max=1)])
+    playback_speed = FloatField('Playback Speed', validators=[DataRequired(), NumberRange(min=0.5, max=2)])
+    submit = SubmitField('Apply Customization')

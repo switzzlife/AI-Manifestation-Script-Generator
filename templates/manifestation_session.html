@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Manifestation Session</h1>
+    <div class="row">
+        <div class="col-md-6">
+            <h2>Audio Customization</h2>
+            <form method="POST" action="{{ url_for('manifestation_session') }}">
+                {{ form.hidden_tag() }}
+                <div class="mb-3">
+                    {{ form.script.label(class="form-label") }}
+                    {{ form.script(class="form-select") }}
+                </div>
+                <div class="mb-3">
+                    {{ form.background_music.label(class="form-label") }}
+                    {{ form.background_music(class="form-select") }}
+                </div>
+                <div class="mb-3">
+                    {{ form.volume.label(class="form-label") }}
+                    {{ form.volume(class="form-range", type="range", min="0", max="1", step="0.1") }}
+                </div>
+                <div class="mb-3">
+                    {{ form.playback_speed.label(class="form-label") }}
+                    {{ form.playback_speed(class="form-range", type="range", min="0.5", max="2", step="0.1") }}
+                </div>
+                {{ form.submit(class="btn btn-primary") }}
+            </form>
+        </div>
+        <div class="col-md-6">
+            <h2>Your Scripts</h2>
+            <div id="audio-player" class="mb-3">
+                <audio controls id="manifestation-audio">
+                    <source src="" type="audio/mpeg">
+                    Your browser does not support the audio element.
+                </audio>
+            </div>
+            <ul class="list-group">
+                {% for script in scripts %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    Script #{{ script.id }}
+                    <button class="btn btn-sm btn-primary play-audio" data-script-id="{{ script.id }}">Play</button>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const audioPlayer = document.getElementById('manifestation-audio');
+    const playButtons = document.querySelectorAll('.play-audio');
+    
+    playButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const scriptId = this.getAttribute('data-script-id');
+            audioPlayer.src = `/get_audio/${scriptId}`;
+            audioPlayer.play();
+        });
+    });
+
+    // Update the script options in the form
+    const scriptSelect = document.getElementById('script');
+    {% for script in scripts %}
+    const option = document.createElement('option');
+    option.value = "{{ script.id }}";
+    option.textContent = "Script #{{ script.id }}";
+    scriptSelect.appendChild(option);
+    {% endfor %}
+});
+</script>
+{% endblock %}

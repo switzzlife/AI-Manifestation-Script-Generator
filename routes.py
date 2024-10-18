@@ -5,7 +5,7 @@ from flask_login import current_user, login_user, logout_user, login_required
 from urllib.parse import urlparse
 from app import app, db, login_manager
 from models import User, Script, Post, Comment, Subscription
-from forms import LoginForm, RegistrationForm, ScriptGenerationForm, PostForm, CommentForm
+from forms import LoginForm, RegistrationForm, ScriptGenerationForm, PostForm, CommentForm, AudioCustomizationForm
 from werkzeug.utils import secure_filename
 import os
 from datetime import datetime, timedelta
@@ -255,6 +255,18 @@ def add_comment(post_id):
 def my_audio_files():
     scripts_with_audio = Script.query.filter_by(user_id=current_user.id).filter(Script.audio_file.isnot(None)).order_by(Script.created_at.desc()).all()
     return render_template('my_audio_files.html', title='My Audio Files', scripts=scripts_with_audio)
+
+@app.route('/manifestation_session', methods=['GET', 'POST'])
+@login_required
+def manifestation_session():
+    form = AudioCustomizationForm()
+    scripts = Script.query.filter_by(user_id=current_user.id).order_by(Script.created_at.desc()).all()
+    
+    if form.validate_on_submit():
+        flash('Audio customization applied successfully!', 'success')
+        return redirect(url_for('manifestation_session'))
+    
+    return render_template('manifestation_session.html', title='Manifestation Session', form=form, scripts=scripts)
 
 @login_manager.user_loader
 def load_user(user_id):
