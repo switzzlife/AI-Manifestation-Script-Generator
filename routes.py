@@ -122,10 +122,10 @@ def send_webhook_request(prompt):
     if response.status_code == 200:
         try:
             json_response = response.json()
-            if 'script_content' in json_response:
-                return json_response['script_content']
+            if 'content' in json_response:
+                return json_response['content']
             else:
-                raise ValueError("Unexpected JSON structure in webhook response")
+                raise ValueError("Unexpected JSON structure in webhook response: 'content' key not found")
         except ValueError as e:
             raise Exception(f"Error parsing JSON from webhook response: {str(e)}")
     else:
