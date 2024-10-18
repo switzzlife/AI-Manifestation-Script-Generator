@@ -1,0 +1,62 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Flask
+instance/
+.webassets-cache
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Replit specific
+.replit
+replit.nix
+.upm/
+
+# Database
+*.sqlite
+
+# IDE specific
+.vscode/
+*.swp
+*.swo
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Audio files
+*.mp3
+*.wav
+
+# Logs
+*.log
+
+# User-uploaded content
+static/uploads/
+
+# Temporary files
+*.tmp
