@@ -19,25 +19,26 @@ openai.api_key = os.environ.get("OPENAI_API_KEY")
 @login_required
 def record_voice():
     logging.info(f"Received voice recording request from user {current_user.id}")
-    if 'audio' not in request.files:
-        logging.error("No audio file provided in the request")
-        return jsonify({'error': 'No audio file provided'}), 400
+    
+    try:
+        if 'audio' not in request.files:
+            logging.error("No audio file provided in the request")
+            return jsonify({'error': 'No audio file provided'}), 400
 
-    audio_file = request.files['audio']
-    script_id = request.form.get('script_id')
+        audio_file = request.files['audio']
+        script_id = request.form.get('script_id')
 
-    logging.info(f"Received audio file: {audio_file.filename}, script_id: {script_id}")
+        logging.info(f"Received audio file: {audio_file.filename}, script_id: {script_id}")
 
-    if audio_file.filename == '':
-        logging.error("Empty filename provided for audio file")
-        return jsonify({'error': 'No selected file'}), 400
+        if audio_file.filename == '':
+            logging.error("Empty filename provided for audio file")
+            return jsonify({'error': 'No selected file'}), 400
 
-    if audio_file and script_id:
-        try:
+        if audio_file and script_id:
             script = Script.query.get(script_id)
             if script and script.user_id == current_user.id:
                 filename = secure_filename(
-                    f"user_voice_{current_user.id}_{script_id}_{datetime.now().strftime('%Y%m%d%H%M%S')}.wav"
+                    f"user_voice_{current_user.id}_{script_id}_{datetime.now().strftime('%Y%m%d%H%M%S')}.webm"
                 )
                 upload_folder = current_app.config['UPLOAD_FOLDER']
 
@@ -61,9 +62,10 @@ def record_voice():
                     f"Invalid script or unauthorized access: script_id={script_id}, user_id={current_user.id}"
                 )
                 return jsonify({'error': 'Invalid script or unauthorized access'}), 403
-        except Exception as e:
-            logging.error(f"Error saving audio file: {str(e)}")
-            return jsonify({'error': f'Failed to save audio file: {str(e)}'}), 500
+        else:
+            logging.error("Invalid request: missing audio file or script_id")
+            return jsonify({'error': 'Invalid request: missing audio file or script_id'}), 400
 
-    logging.error("Invalid request: missing audio file or script_id")
-    return jsonify({'error': 'Invalid request'}), 400
+    except Exception as e:
+        logging.exception(f"Error in record_voice: {str(e)}")
+        return jsonify({'error': f'Server error: {str(e)}'}), 500
