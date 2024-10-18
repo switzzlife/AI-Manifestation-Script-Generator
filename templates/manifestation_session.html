@@ -6,7 +6,7 @@
     <div class="row">
         <div class="col-md-6">
             <h2>Audio Customization</h2>
-            <form method="POST" action="{{ url_for('manifestation_session') }}">
+            <form method="POST" action="{{ url_for('manifestation_session') }}" id="customization-form">
                 {{ form.hidden_tag() }}
                 <div class="mb-3">
                     {{ form.script.label(class="form-label") }}
@@ -40,7 +40,7 @@
                     </div>
                     {{ form.playback_speed(type="hidden", id="speed-input") }}
                 </div>
-                {{ form.submit(class="btn btn-primary") }}
+                {{ form.submit(class="btn btn-primary", id="apply-customization") }}
             </form>
         </div>
         <div class="col-md-6">
@@ -57,7 +57,13 @@
                     Your browser does not support the audio element.
                 </audio>
             </div>
-            <ul class="list-group">
+            <div id="loading-indicator" class="d-none">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <span class="ms-2">Preparing audio...</span>
+            </div>
+            <ul class="list-group" id="script-list">
                 {% for script in scripts %}
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     Script #{{ script.id }}
@@ -86,16 +92,45 @@ document.addEventListener('DOMContentLoaded', function() {
     const speedValue = document.getElementById('speed-value');
     const speedInput = document.getElementById('speed-input');
     const backgroundMusicSelect = document.getElementById('background_music');
+    const applyCustomizationBtn = document.getElementById('apply-customization');
+    const loadingIndicator = document.getElementById('loading-indicator');
+    const scriptSelect = document.getElementById('script');
     
-    playButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const scriptId = this.getAttribute('data-script-id');
-            audioPlayer.src = `/get_audio/${scriptId}`;
+    function updateAudioSettings() {
+        audioPlayer.volume = volumeRange.value;
+        backgroundAudio.volume = backgroundVolumeRange.value;
+        audioPlayer.playbackRate = speedRange.value;
+        backgroundAudio.playbackRate = speedRange.value;
+    }
+
+    function playAudio() {
+        loadingIndicator.classList.remove('d-none');
+        const scriptId = scriptSelect.value;
+        audioPlayer.src = `/get_audio/${scriptId}`;
+        
+        audioPlayer.oncanplaythrough = function() {
+            loadingIndicator.classList.add('d-none');
             audioPlayer.play();
             if (backgroundMusicSelect.value !== 'none') {
+                backgroundAudio.src = `/get_background_music/${backgroundMusicSelect.value}.mp3`;
                 backgroundAudio.play();
             }
-        });
+            updateAudioSettings();
+        };
+
+        audioPlayer.onerror = function() {
+            loadingIndicator.classList.add('d-none');
+            alert('Error loading audio. Please try again.');
+        };
+    }
+
+    applyCustomizationBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (!scriptSelect.value) {
+            alert('Please select a script.');
+            return;
+        }
+        playAudio();
     });
 
     volumeRange.addEventListener('input', function() {
@@ -117,23 +152,26 @@ document.addEventListener('DOMContentLoaded', function() {
         speedValue.textContent = `${value}x`;
         speedInput.value = value;
         audioPlayer.playbackRate = value;
+        backgroundAudio.playbackRate = value;
     });
 
     backgroundMusicSelect.addEventListener('change', function() {
-        const selectedMusic = this.value;
-        if (selectedMusic === 'none') {
+        if (this.value === 'none') {
             backgroundAudio.pause();
             backgroundAudio.src = '';
-        } else {
-            backgroundAudio.src = `/get_background_music/${selectedMusic}.mp3`;
+        } else if (audioPlayer.currentTime > 0) {
+            backgroundAudio.src = `/get_background_music/${this.value}.mp3`;
             backgroundAudio.play();
         }
     });
 
-    // Set initial background music
-    if (backgroundMusicSelect.value !== 'none') {
-        backgroundAudio.src = `/get_background_music/${backgroundMusicSelect.value}.mp3`;
-    }
+    playButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const scriptId = this.getAttribute('data-script-id');
+            scriptSelect.value = scriptId;
+            playAudio();
+        });
+    });
 });
 </script>
 {% endblock %}
