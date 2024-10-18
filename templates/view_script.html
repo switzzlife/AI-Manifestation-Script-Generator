@@ -93,6 +93,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function saveRecording(e) {
         e.preventDefault();
+        console.log('Starting saveRecording function');
+        
         const formData = new FormData(voiceRecordingForm);
         const blob = recorder.getBlob();
         formData.append('audio', blob, 'user_voice.wav');
@@ -102,11 +104,13 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log(key, value);
         }
 
+        console.log('Sending fetch request to /record_voice');
         fetch('/record_voice', {
             method: 'POST',
             body: formData
         })
         .then(response => {
+            console.log('Received response:', response);
             if (!response.ok) {
                 return response.text().then(text => {
                     throw new Error(`HTTP error! status: ${response.status}, message: ${text}`);
@@ -115,6 +119,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return response.json();
         })
         .then(data => {
+            console.log('Received data:', data);
             if (data.success) {
                 userVoiceFilename.value = data.filename;
                 alert('Voice recording saved successfully!');

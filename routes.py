@@ -1,15 +1,15 @@
-import os
-import stripe
-import logging
-from flask import render_template, flash, redirect, url_for, request, jsonify, send_file, current_app
-from flask_login import current_user, login_user, logout_user, login_required
+from flask import render_template, redirect, url_for, flash, request, jsonify, current_app, send_file
+from flask_login import login_user, logout_user, current_user, login_required
 from urllib.parse import urlparse
+from werkzeug.utils import secure_filename
 from app import app, db
 from models import User, Script, Post, Comment, Subscription
 from forms import LoginForm, RegistrationForm, ScriptGenerationForm, PostForm, CommentForm, AudioCustomizationForm
-from werkzeug.utils import secure_filename
-from datetime import datetime, timedelta
 from chat_request import send_openai_request
+import os
+import stripe
+from datetime import datetime, timedelta
+import logging
 import openai
 
 stripe.api_key = app.config['STRIPE_SECRET_KEY']
