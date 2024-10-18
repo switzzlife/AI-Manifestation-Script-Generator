@@ -76,7 +76,7 @@ def generate_script():
     if current_user.is_paid or current_user.scripts_generated < 2:
         form = ScriptGenerationForm()
         if form.validate_on_submit():
-            prompt = f"Generate a {form.duration.data}-minute manifestation script for {form.goal.data}. Focus on {form.focus.data}. Use a {form.tone.data} tone, incorporate {form.visualization.data} visualization, and use {form.affirmation_style.data} affirmations."
+            prompt = f"Generate a {form.duration.data}-minute guided manifestation instruction for {form.goal.data}. Focus on {form.focus.data}. Use a {form.tone.data} tone, incorporate {form.visualization.data} visualization, and use {form.affirmation_style.data} affirmations. Make sure the result is conversation, add '...' between sentences where you think the reader should pause or talk slowly. Make sure the result is something that I can send directly to a TTS program and it will read it out loud for the user."
             script_content = send_openai_request(prompt)
             
             script = Script(content=script_content, user_id=current_user.id)
@@ -264,19 +264,17 @@ def manifestation_session():
     
     form.script.choices = [(str(script.id), f"Script #{script.id}") for script in scripts_with_audio]
     
-    # Set default values for form fields
     if form.volume.data is None:
-        form.volume.data = 0.5  # Default to 50% volume
+        form.volume.data = 0.5
     if form.background_volume.data is None:
-        form.background_volume.data = 0.5  # Default to 50% background volume
+        form.background_volume.data = 0.5
     if form.playback_speed.data is None:
-        form.playback_speed.data = 1.0  # Default to normal speed
+        form.playback_speed.data = 1.0
     
     if form.validate_on_submit():
         script_id = int(form.script.data)
         script = Script.query.get(script_id)
         if script and script.user_id == current_user.id:
-            # Save the customization preferences
             script.background_music = form.background_music.data
             script.volume = form.volume.data
             script.background_volume = form.background_volume.data
@@ -293,3 +291,20 @@ def manifestation_session():
 @login_required
 def get_background_music(filename):
     return send_file(f'static/audio/{filename}', as_attachment=True)
+
+@app.route('/delete_script/<int:script_id>', methods=['POST'])
+@login_required
+def delete_script(script_id):
+    script = Script.query.get_or_404(script_id)
+    if script.user_id != current_user.id:
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+    
+    if script.audio_file:
+        audio_path = os.path.join(app.config['UPLOAD_FOLDER'], script.audio_file)
+        if os.path.exists(audio_path):
+            os.remove(audio_path)
+    
+    db.session.delete(script)
+    db.session.commit()
+    
+    return jsonify({'success': True})
