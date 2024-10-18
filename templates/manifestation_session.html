@@ -81,6 +81,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const scriptSelect = document.getElementById('script');
     
     let isPlaying = false;
+    let fadeOutInterval;
 
     function updateAudioSettings() {
         audioPlayer.volume = volumeRange.value;
@@ -98,6 +99,7 @@ document.addEventListener('DOMContentLoaded', function() {
             audioPlayer.play();
             if (backgroundMusicSelect.value !== 'none') {
                 backgroundAudio.src = `/get_background_music/${backgroundMusicSelect.value}`;
+                backgroundAudio.loop = true;
                 backgroundAudio.play().catch(error => {
                     console.error('Error playing background music:', error);
                 });
@@ -126,6 +128,22 @@ document.addEventListener('DOMContentLoaded', function() {
             pauseButton.textContent = 'Pause';
         }
         isPlaying = !isPlaying;
+    }
+
+    function fadeOutBackgroundMusic() {
+        let volume = parseFloat(backgroundVolumeRange.value);
+        fadeOutInterval = setInterval(() => {
+            volume -= 0.01;
+            if (volume <= 0) {
+                clearInterval(fadeOutInterval);
+                backgroundAudio.pause();
+                backgroundAudio.currentTime = 0;
+            } else {
+                backgroundAudio.volume = volume;
+                backgroundVolumeRange.value = volume;
+                backgroundVolumeValue.textContent = `${Math.round(volume * 100)}%`;
+            }
+        }, 150); // 15 seconds / 100 steps = 150ms per step
     }
 
     applyCustomizationBtn.addEventListener('click', function(e) {
@@ -166,6 +184,7 @@ document.addEventListener('DOMContentLoaded', function() {
             backgroundAudio.src = '';
         } else if (audioPlayer.currentTime > 0) {
             backgroundAudio.src = `/get_background_music/${this.value}`;
+            backgroundAudio.loop = true;
             backgroundAudio.play().catch(error => {
                 console.error('Error playing background music:', error);
             });
@@ -175,6 +194,7 @@ document.addEventListener('DOMContentLoaded', function() {
     audioPlayer.addEventListener('ended', function() {
         isPlaying = false;
         pauseButton.textContent = 'Play';
+        fadeOutBackgroundMusic();
     });
 });
 </script>
