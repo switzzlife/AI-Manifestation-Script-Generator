@@ -291,7 +291,16 @@ def manifestation_session():
 @login_required
 def get_background_music(filename):
     audio_folder = os.path.join(current_app.static_folder, 'audio')
-    return send_file(os.path.join(audio_folder, filename), as_attachment=True)
+    file_path = os.path.join(audio_folder, filename)
+    
+    # Remove duplicate .mp3 extension if present
+    if file_path.endswith('.mp3.mp3'):
+        file_path = file_path[:-4]
+    
+    if os.path.exists(file_path):
+        return send_file(file_path, as_attachment=True)
+    else:
+        return jsonify({'error': 'File not found'}), 404
 
 @app.route('/delete_script/<int:script_id>', methods=['POST'])
 @login_required

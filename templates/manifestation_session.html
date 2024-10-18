@@ -92,7 +92,6 @@ document.addEventListener('DOMContentLoaded', function() {
         audioPlayer.volume = volumeRange.value;
         backgroundAudio.volume = backgroundVolumeRange.value;
         audioPlayer.playbackRate = speedRange.value;
-        // Removed: backgroundAudio.playbackRate = speedRange.value;
     }
 
     function playAudio() {
@@ -104,8 +103,10 @@ document.addEventListener('DOMContentLoaded', function() {
             loadingIndicator.classList.add('d-none');
             audioPlayer.play();
             if (backgroundMusicSelect.value !== 'none') {
-                backgroundAudio.src = `/get_background_music/${backgroundMusicSelect.value}.mp3`;
-                backgroundAudio.play();
+                backgroundAudio.src = `/get_background_music/${backgroundMusicSelect.value}`;
+                backgroundAudio.play().catch(error => {
+                    console.error('Error playing background music:', error);
+                });
             }
             updateAudioSettings();
             isPlaying = true;
@@ -163,7 +164,6 @@ document.addEventListener('DOMContentLoaded', function() {
         speedValue.textContent = `${value}x`;
         speedInput.value = value;
         audioPlayer.playbackRate = value;
-        // Removed: backgroundAudio.playbackRate = value;
     });
 
     backgroundMusicSelect.addEventListener('change', function() {
@@ -171,8 +171,10 @@ document.addEventListener('DOMContentLoaded', function() {
             backgroundAudio.pause();
             backgroundAudio.src = '';
         } else if (audioPlayer.currentTime > 0) {
-            backgroundAudio.src = `/get_background_music/${this.value}.mp3`;
-            backgroundAudio.play();
+            backgroundAudio.src = `/get_background_music/${this.value}`;
+            backgroundAudio.play().catch(error => {
+                console.error('Error playing background music:', error);
+            });
         }
     });
 
