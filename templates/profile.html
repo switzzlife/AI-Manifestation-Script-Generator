@@ -35,6 +35,19 @@
                             </div>
                             <div class="modal-body">
                                 {{ script.content }}
+                                <div class="mt-3">
+                                    {% if script.audio_file %}
+                                        <h6>Audio Version</h6>
+                                        <audio controls>
+                                            <source src="{{ url_for('get_audio', script_id=script.id) }}" type="audio/mpeg">
+                                            Your browser does not support the audio element.
+                                        </audio>
+                                    {% endif %}
+                                    <form action="{{ url_for('view_script', script_id=script.id) }}" method="post">
+                                        <input type="hidden" name="generate_audio" value="1">
+                                        <button type="submit" class="btn btn-success">Generate Audio</button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     </div>
