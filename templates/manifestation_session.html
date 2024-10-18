@@ -18,11 +18,19 @@
                 </div>
                 <div class="mb-3">
                     {{ form.volume.label(class="form-label") }}
-                    {{ form.volume(class="form-range", type="range", min="0", max="1", step="0.1") }}
+                    <div class="d-flex align-items-center">
+                        <input type="range" class="form-range" id="volume-range" min="0" max="1" step="0.1" value="{{ form.volume.data }}">
+                        <span class="ms-2" id="volume-value">{{ (form.volume.data * 100)|int }}%</span>
+                    </div>
+                    {{ form.volume(type="hidden", id="volume-input") }}
                 </div>
                 <div class="mb-3">
                     {{ form.playback_speed.label(class="form-label") }}
-                    {{ form.playback_speed(class="form-range", type="range", min="0.5", max="2", step="0.1") }}
+                    <div class="d-flex align-items-center">
+                        <input type="range" class="form-range" id="speed-range" min="0.5" max="2" step="0.1" value="{{ form.playback_speed.data }}">
+                        <span class="ms-2" id="speed-value">{{ form.playback_speed.data }}x</span>
+                    </div>
+                    {{ form.playback_speed(type="hidden", id="speed-input") }}
                 </div>
                 {{ form.submit(class="btn btn-primary") }}
             </form>
@@ -53,6 +61,12 @@
 document.addEventListener('DOMContentLoaded', function() {
     const audioPlayer = document.getElementById('manifestation-audio');
     const playButtons = document.querySelectorAll('.play-audio');
+    const volumeRange = document.getElementById('volume-range');
+    const volumeValue = document.getElementById('volume-value');
+    const volumeInput = document.getElementById('volume-input');
+    const speedRange = document.getElementById('speed-range');
+    const speedValue = document.getElementById('speed-value');
+    const speedInput = document.getElementById('speed-input');
     
     playButtons.forEach(button => {
         button.addEventListener('click', function() {
@@ -62,14 +76,19 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Update the script options in the form
-    const scriptSelect = document.getElementById('script');
-    {% for script in scripts %}
-    const option = document.createElement('option');
-    option.value = "{{ script.id }}";
-    option.textContent = "Script #{{ script.id }}";
-    scriptSelect.appendChild(option);
-    {% endfor %}
+    volumeRange.addEventListener('input', function() {
+        const value = this.value;
+        volumeValue.textContent = `${Math.round(value * 100)}%`;
+        volumeInput.value = value;
+        audioPlayer.volume = value;
+    });
+
+    speedRange.addEventListener('input', function() {
+        const value = this.value;
+        speedValue.textContent = `${value}x`;
+        speedInput.value = value;
+        audioPlayer.playbackRate = value;
+    });
 });
 </script>
 {% endblock %}

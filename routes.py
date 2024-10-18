@@ -3,7 +3,7 @@ import logging
 from flask import render_template, flash, redirect, url_for, request, jsonify, send_file
 from flask_login import current_user, login_user, logout_user, login_required
 from urllib.parse import urlparse
-from app import app, db, login_manager
+from app import app, db
 from models import User, Script, Post, Comment, Subscription
 from forms import LoginForm, RegistrationForm, ScriptGenerationForm, PostForm, CommentForm, AudioCustomizationForm
 from werkzeug.utils import secure_filename
@@ -11,7 +11,6 @@ import os
 from datetime import datetime, timedelta
 from chat_request import send_openai_request
 import openai
-import tempfile
 
 stripe.api_key = app.config['STRIPE_SECRET_KEY']
 openai.api_key = os.environ.get("OPENAI_API_KEY")
@@ -118,7 +117,7 @@ def generate_script():
 @login_required
 def view_script(script_id):
     script = Script.query.get_or_404(script_id)
-    if script.author != current_user:
+    if script.user_id != current_user.id:
         flash('You do not have permission to view this script.', 'error')
         return redirect(url_for('profile'))
     return render_template('view_script.html', title='View Script', script=script)
@@ -127,7 +126,7 @@ def view_script(script_id):
 @login_required
 def get_audio(script_id):
     script = Script.query.get_or_404(script_id)
-    if script.author != current_user:
+    if script.user_id != current_user.id:
         flash('You do not have permission to access this audio.', 'error')
         return redirect(url_for('profile'))
     if script.audio_file:
@@ -259,15 +258,25 @@ def my_audio_files():
 @app.route('/manifestation_session', methods=['GET', 'POST'])
 @login_required
 def manifestation_session():
+    app.logger.info(f"User {current_user.id} accessing manifestation_session")
     form = AudioCustomizationForm()
-    scripts = Script.query.filter_by(user_id=current_user.id).order_by(Script.created_at.desc()).all()
+    scripts_with_audio = Script.query.filter_by(user_id=current_user.id).filter(Script.audio_file.isnot(None)).order_by(Script.created_at.desc()).all()
+    
+    form.script.choices = [(str(script.id), f"Script #{script.id}") for script in scripts_with_audio]
     
     if form.validate_on_submit():
-        flash('Audio customization applied successfully!', 'success')
+        script_id = int(form.script.data)
+        script = Script.query.get(script_id)
+        if script and script.user_id == current_user.id:
+            # Here we would typically process the audio file with the selected customizations
+            # For now, we'll just save the customization preferences
+            script.background_music = form.background_music.data
+            script.volume = form.volume.data
+            script.playback_speed = form.playback_speed.data
+            db.session.commit()
+            flash('Audio customization applied successfully!', 'success')
+        else:
+            flash('Invalid script selection.', 'error')
         return redirect(url_for('manifestation_session'))
     
-    return render_template('manifestation_session.html', title='Manifestation Session', form=form, scripts=scripts)
-
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
+    return render_template('manifestation_session.html', title='Manifestation Session', form=form, scripts=scripts_with_audio)

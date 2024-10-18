@@ -15,6 +15,7 @@ app.config['STRIPE_PRICE_ID'] = os.environ.get('STRIPE_PRICE_ID')
 
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
+login_manager.login_view = 'login'
 migrate = Migrate(app, db)
 
 # Configure upload folder
@@ -25,6 +26,10 @@ if not os.path.exists(app.config['UPLOAD_FOLDER']):
 with app.app_context():
     import models
     db.create_all()
+
+@login_manager.user_loader
+def load_user(user_id):
+    return models.User.query.get(int(user_id))
 
 from routes import *
 
