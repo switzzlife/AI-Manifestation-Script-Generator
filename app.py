@@ -8,12 +8,6 @@ from flask_wtf.csrf import CSRFProtect
 app = Flask(__name__)
 app.config.from_object('config.Config')
 
-# Stripe configuration
-app.config['STRIPE_PUBLIC_KEY'] = os.environ.get('STRIPE_PUBLIC_KEY')
-app.config['STRIPE_SECRET_KEY'] = os.environ.get('STRIPE_SECRET_KEY')
-app.config['STRIPE_WEBHOOK_SECRET'] = os.environ.get('STRIPE_WEBHOOK_SECRET')
-app.config['STRIPE_PRICE_ID'] = os.environ.get('STRIPE_PRICE_ID')
-
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'

@@ -9,9 +9,6 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
     profile_photo = db.Column(db.String(255), nullable=False)
-    is_paid = db.Column(db.Boolean, default=False)
-    scripts_generated = db.Column(db.Integer, default=0)
-    subscription = db.relationship('Subscription', backref='user', uselist=False)
     scripts = db.relationship('Script', backref='author', lazy='dynamic')
     posts = db.relationship('Post', backref='author', lazy='dynamic')
     comments = db.relationship('Comment', backref='author', lazy='dynamic')
@@ -22,20 +19,12 @@ class User(UserMixin, db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
-class Subscription(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True)
-    stripe_customer_id = db.Column(db.String(255), unique=True)
-    stripe_subscription_id = db.Column(db.String(255), unique=True)
-    active = db.Column(db.Boolean, default=True)
-    current_period_end = db.Column(db.DateTime)
-
 class Script(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    audio_file = db.Column(db.String(255))  # New field for audio file
+    audio_file = db.Column(db.String(255))
 
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
