@@ -47,14 +47,6 @@
             <span class="text-danger">{{ error }}</span>
             {% endfor %}
         </div>
-        <div class="mb-3">
-            {{ form.custom_prompt.label(class="form-label") }}
-            {{ form.custom_prompt(class="form-control", rows=3) }}
-            {% for error in form.custom_prompt.errors %}
-            <span class="text-danger">{{ error }}</span>
-            {% endfor %}
-            <small class="form-text text-muted">Optional: Add any specific instructions or preferences for your script here.</small>
-        </div>
         <div class="mb-3 form-check">
             {{ form.generate_audio(class="form-check-input") }}
             {{ form.generate_audio.label(class="form-check-label") }}
