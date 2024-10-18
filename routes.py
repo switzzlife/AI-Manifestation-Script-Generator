@@ -73,15 +73,23 @@ def record_voice():
         return jsonify({'error': 'No audio file provided'}), 400
     
     audio_file = request.files['audio']
+    script_id = request.form.get('script_id')
+    
     if audio_file.filename == '':
         return jsonify({'error': 'No selected file'}), 400
     
-    if audio_file:
-        filename = secure_filename(f"user_voice_{current_user.id}_{datetime.now().strftime('%Y%m%d%H%M%S')}.wav")
-        audio_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        audio_file.save(audio_path)
-        
-        return jsonify({'success': True, 'filename': filename}), 200
+    if audio_file and script_id:
+        script = Script.query.get(script_id)
+        if script and script.user_id == current_user.id:
+            filename = secure_filename(f"user_voice_{current_user.id}_{script_id}_{datetime.now().strftime('%Y%m%d%H%M%S')}.wav")
+            audio_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            audio_file.save(audio_path)
+            
+            # Update the script with the new audio file
+            script.audio_file = filename
+            db.session.commit()
+            
+            return jsonify({'success': True, 'filename': filename}), 200
     
     return jsonify({'error': 'Failed to save audio file'}), 500
 

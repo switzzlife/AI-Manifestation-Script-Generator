@@ -16,9 +16,104 @@
                 </audio>
             </div>
             {% endif %}
+            <div class="mt-3">
+                <h5>Record Your Voice</h5>
+                <div class="d-flex align-items-center">
+                    <button type="button" id="startRecording" class="btn btn-primary me-2">Start Recording</button>
+                    <button type="button" id="stopRecording" class="btn btn-secondary me-2" disabled>Stop Recording</button>
+                    <span id="recordingStatus" class="ms-2"></span>
+                </div>
+                <audio id="audioPlayback" controls class="mt-2 d-none"></audio>
+                <form id="voiceRecordingForm" class="mt-2">
+                    <input type="hidden" id="scriptId" name="script_id" value="{{ script.id }}">
+                    <input type="hidden" id="userVoiceFilename" name="user_voice_filename">
+                    <button type="submit" id="saveRecording" class="btn btn-success" disabled>Save Recording</button>
+                </form>
+            </div>
         </div>
     </div>
     <a href="{{ url_for('profile') }}" class="btn btn-primary mt-3">Back to Profile</a>
     <a href="{{ url_for('generate_script') }}" class="btn btn-secondary mt-3">Generate New Script</a>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/recordrtc/RecordRTC.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let recorder;
+    const startButton = document.getElementById('startRecording');
+    const stopButton = document.getElementById('stopRecording');
+    const saveButton = document.getElementById('saveRecording');
+    const recordingStatus = document.getElementById('recordingStatus');
+    const audioPlayback = document.getElementById('audioPlayback');
+    const userVoiceFilename = document.getElementById('userVoiceFilename');
+    const voiceRecordingForm = document.getElementById('voiceRecordingForm');
+
+    startButton.addEventListener('click', startRecording);
+    stopButton.addEventListener('click', stopRecording);
+    voiceRecordingForm.addEventListener('submit', saveRecording);
+
+    function startRecording() {
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(function(stream) {
+                recorder = new RecordRTC(stream, {
+                    type: 'audio',
+                    mimeType: 'audio/webm',
+                    sampleRate: 44100,
+                    desiredSampRate: 16000,
+                    recorderType: RecordRTC.StereoAudioRecorder,
+                    numberOfAudioChannels: 1
+                });
+                recorder.startRecording();
+                startButton.disabled = true;
+                stopButton.disabled = false;
+                saveButton.disabled = true;
+                recordingStatus.textContent = 'Recording...';
+            })
+            .catch(function(err) {
+                console.error('Error accessing microphone:', err);
+                alert('Error accessing microphone. Please check your permissions.');
+            });
+    }
+
+    function stopRecording() {
+        recorder.stopRecording(function() {
+            const blob = recorder.getBlob();
+            const audioUrl = URL.createObjectURL(blob);
+            audioPlayback.src = audioUrl;
+            audioPlayback.classList.remove('d-none');
+            
+            startButton.disabled = false;
+            stopButton.disabled = true;
+            saveButton.disabled = false;
+            recordingStatus.textContent = 'Recording stopped';
+        });
+    }
+
+    function saveRecording(e) {
+        e.preventDefault();
+        const formData = new FormData(voiceRecordingForm);
+        formData.append('audio', recorder.getBlob(), 'user_voice.wav');
+        
+        fetch('/record_voice', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                userVoiceFilename.value = data.filename;
+                alert('Voice recording saved successfully!');
+            } else {
+                alert('Error saving voice recording: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error uploading voice recording:', error);
+            alert('Error uploading voice recording. Please try again.');
+        });
+    }
+});
+</script>
 {% endblock %}
