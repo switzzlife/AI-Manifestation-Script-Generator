@@ -76,13 +76,7 @@ def generate_script():
     if current_user.is_paid or current_user.scripts_generated < 2:
         form = ScriptGenerationForm()
         if form.validate_on_submit():
-            base_prompt = f"Generate a {form.duration.data}-minute manifestation script for {form.goal.data}. Focus on {form.focus.data}. Use a {form.tone.data} tone, incorporate {form.visualization.data} visualization, and use {form.affirmation_style.data} affirmations."
-            
-            if form.custom_prompt.data:
-                prompt = f"{base_prompt}\n\nAdditional instructions: {form.custom_prompt.data}"
-            else:
-                prompt = base_prompt
-
+            prompt = f"Generate a {form.duration.data}-minute manifestation script for {form.goal.data}. Focus on {form.focus.data}. Use a {form.tone.data} tone, incorporate {form.visualization.data} visualization, and use {form.affirmation_style.data} affirmations."
             script_content = send_openai_request(prompt)
             
             script = Script(content=script_content, user_id=current_user.id)
@@ -270,17 +264,19 @@ def manifestation_session():
     
     form.script.choices = [(str(script.id), f"Script #{script.id}") for script in scripts_with_audio]
     
+    # Set default values for form fields
     if form.volume.data is None:
-        form.volume.data = 0.5
+        form.volume.data = 0.5  # Default to 50% volume
     if form.background_volume.data is None:
-        form.background_volume.data = 0.5
+        form.background_volume.data = 0.5  # Default to 50% background volume
     if form.playback_speed.data is None:
-        form.playback_speed.data = 1.0
+        form.playback_speed.data = 1.0  # Default to normal speed
     
     if form.validate_on_submit():
         script_id = int(form.script.data)
         script = Script.query.get(script_id)
         if script and script.user_id == current_user.id:
+            # Save the customization preferences
             script.background_music = form.background_music.data
             script.volume = form.volume.data
             script.background_volume = form.background_volume.data

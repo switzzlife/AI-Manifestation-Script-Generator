@@ -35,7 +35,6 @@ class ScriptGenerationForm(FlaskForm):
     tone = SelectField('Script Tone', choices=[('positive', 'Positive'), ('energetic', 'Energetic'), ('calm', 'Calm'), ('confident', 'Confident')], validators=[DataRequired()])
     visualization = SelectField('Visualization Type', choices=[('guided', 'Guided Imagery'), ('future_self', 'Future Self'), ('vision_board', 'Mental Vision Board')], validators=[DataRequired()])
     affirmation_style = SelectField('Affirmation Style', choices=[('present', 'Present Tense'), ('future', 'Future Tense'), ('gratitude', 'Gratitude-based')], validators=[DataRequired()])
-    custom_prompt = TextAreaField('Custom Prompt', validators=[Length(max=500)])
     generate_audio = BooleanField('Generate Audio')
     submit = SubmitField('Generate Script')
 
