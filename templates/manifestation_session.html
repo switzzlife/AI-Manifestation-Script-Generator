@@ -25,6 +25,14 @@
                     {{ form.volume(type="hidden", id="volume-input") }}
                 </div>
                 <div class="mb-3">
+                    {{ form.background_volume.label(class="form-label") }}
+                    <div class="d-flex align-items-center">
+                        <input type="range" class="form-range" id="background-volume-range" min="0" max="1" step="0.1" value="{{ form.background_volume.data or 0.5 }}">
+                        <span class="ms-2" id="background-volume-value">{{ ((form.background_volume.data or 0.5) * 100)|int }}%</span>
+                    </div>
+                    {{ form.background_volume(type="hidden", id="background-volume-input") }}
+                </div>
+                <div class="mb-3">
                     {{ form.playback_speed.label(class="form-label") }}
                     <div class="d-flex align-items-center">
                         <input type="range" class="form-range" id="speed-range" min="0.5" max="2" step="0.1" value="{{ form.playback_speed.data or 1.0 }}">
@@ -71,6 +79,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const volumeRange = document.getElementById('volume-range');
     const volumeValue = document.getElementById('volume-value');
     const volumeInput = document.getElementById('volume-input');
+    const backgroundVolumeRange = document.getElementById('background-volume-range');
+    const backgroundVolumeValue = document.getElementById('background-volume-value');
+    const backgroundVolumeInput = document.getElementById('background-volume-input');
     const speedRange = document.getElementById('speed-range');
     const speedValue = document.getElementById('speed-value');
     const speedInput = document.getElementById('speed-input');
@@ -92,6 +103,13 @@ document.addEventListener('DOMContentLoaded', function() {
         volumeValue.textContent = `${Math.round(value * 100)}%`;
         volumeInput.value = value;
         audioPlayer.volume = value;
+    });
+
+    backgroundVolumeRange.addEventListener('input', function() {
+        const value = this.value;
+        backgroundVolumeValue.textContent = `${Math.round(value * 100)}%`;
+        backgroundVolumeInput.value = value;
+        backgroundAudio.volume = value;
     });
 
     speedRange.addEventListener('input', function() {

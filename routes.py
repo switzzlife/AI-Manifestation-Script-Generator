@@ -267,6 +267,8 @@ def manifestation_session():
     # Set default values for form fields
     if form.volume.data is None:
         form.volume.data = 0.5  # Default to 50% volume
+    if form.background_volume.data is None:
+        form.background_volume.data = 0.5  # Default to 50% background volume
     if form.playback_speed.data is None:
         form.playback_speed.data = 1.0  # Default to normal speed
     
@@ -277,6 +279,7 @@ def manifestation_session():
             # Save the customization preferences
             script.background_music = form.background_music.data
             script.volume = form.volume.data
+            script.background_volume = form.background_volume.data
             script.playback_speed = form.playback_speed.data
             db.session.commit()
             flash('Audio customization applied successfully!', 'success')
