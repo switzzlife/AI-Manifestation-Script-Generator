@@ -1,6 +1,6 @@
 import stripe
 import logging
-from flask import render_template, flash, redirect, url_for, request, jsonify, send_file
+from flask import render_template, flash, redirect, url_for, request, jsonify, send_file, current_app
 from flask_login import current_user, login_user, logout_user, login_required
 from urllib.parse import urlparse
 from app import app, db
@@ -299,12 +299,15 @@ def delete_script(script_id):
     if script.user_id != current_user.id:
         return jsonify({'success': False, 'error': 'Unauthorized'}), 403
     
-    if script.audio_file:
-        audio_path = os.path.join(app.config['UPLOAD_FOLDER'], script.audio_file)
-        if os.path.exists(audio_path):
-            os.remove(audio_path)
-    
-    db.session.delete(script)
-    db.session.commit()
-    
-    return jsonify({'success': True})
+    try:
+        if script.audio_file:
+            audio_path = os.path.join(current_app.config['UPLOAD_FOLDER'], script.audio_file)
+            if os.path.exists(audio_path):
+                os.remove(audio_path)
+        
+        db.session.delete(script)
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Script deleted successfully'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
