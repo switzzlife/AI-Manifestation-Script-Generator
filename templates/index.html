@@ -1,33 +1,85 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="jumbotron text-center">
-    <h1 class="display-4">Welcome to AI Manifestation Script Generator</h1>
-    <p class="lead">Harness the power of AI to create personalized manifestation scripts and achieve your goals.</p>
-    {% if not current_user.is_authenticated %}
-        <hr class="my-4">
-        <p>Get started by creating an account or logging in.</p>
-        <a class="btn btn-primary btn-lg" href="{{ url_for('register') }}" role="button">Register</a>
-        <a class="btn btn-secondary btn-lg" href="{{ url_for('login') }}" role="button">Login</a>
+<div class="container-fluid vh-100 d-flex flex-column justify-content-center align-items-center text-center">
+    <h1 class="display-1 mb-4">AI Manifestation</h1>
+    <p class="lead mb-5">Harness the power of AI to create personalized manifestation scripts and achieve your goals.</p>
+    {% if current_user.is_authenticated %}
+        <a href="{{ url_for('generate_script') }}" class="btn btn-primary btn-lg mb-5">Generate a Script</a>
     {% else %}
-        <hr class="my-4">
-        <p>Ready to manifest your dreams?</p>
-        <a class="btn btn-primary btn-lg" href="{{ url_for('generate_script') }}" role="button">Generate a Script</a>
+        <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg me-3 mb-5">Register</a>
+        <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-lg mb-5">Login</a>
     {% endif %}
+    
+    <div class="row w-100 mt-5">
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <i class="fas fa-wand-magic-sparkles fa-3x mb-3"></i>
+                    <h2 class="card-title">Personalized Scripts</h2>
+                    <p class="card-text">Our AI creates unique manifestation scripts tailored to your specific goals and needs.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <i class="fas fa-users fa-3x mb-3"></i>
+                    <h2 class="card-title">Community Support</h2>
+                    <p class="card-text">Connect with like-minded individuals to share experiences and support each other.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <i class="fas fa-chart-line fa-3x mb-3"></i>
+                    <h2 class="card-title">Track Your Progress</h2>
+                    <p class="card-text">Save and review your generated scripts to monitor your manifestation journey over time.</p>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+{% endblock %}
 
-<div class="row mt-5">
-    <div class="col-md-4">
-        <h2>Personalized Scripts</h2>
-        <p>Our AI-powered system creates unique manifestation scripts tailored to your specific goals and needs.</p>
-    </div>
-    <div class="col-md-4">
-        <h2>Community Support</h2>
-        <p>Connect with like-minded individuals in our community board to share experiences and support each other.</p>
-    </div>
-    <div class="col-md-4">
-        <h2>Track Your Progress</h2>
-        <p>Save and review your generated scripts to monitor your manifestation journey over time.</p>
-    </div>
-</div>
+{% block styles %}
+<style>
+    body {
+        background: linear-gradient(135deg, #6f42c1, #007bff);
+    }
+    .btn-primary {
+        background: linear-gradient(45deg, #ff00cc, #3333ff);
+        border: none;
+    }
+    .btn-primary:hover {
+        background: linear-gradient(45deg, #3333ff, #ff00cc);
+    }
+    .btn-outline-primary {
+        border-color: #ff00cc;
+        color: #fff;
+    }
+    .btn-outline-primary:hover {
+        background: linear-gradient(45deg, #ff00cc, #3333ff);
+        border-color: transparent;
+    }
+    .card {
+        transition: transform 0.3s;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .card:hover {
+        transform: translateY(-5px);
+    }
+    .fa-3x {
+        color: #ff00cc;
+    }
+    .display-1 {
+        font-weight: bold;
+        background: linear-gradient(45deg, #ff00cc, #3333ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+</style>
 {% endblock %}
