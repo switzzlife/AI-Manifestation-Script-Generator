@@ -145,49 +145,51 @@ def generate_script():
             
             try:
                 script_content = send_webhook_request(prompt)
+                if not script_content:
+                    raise ValueError("Empty script content received from webhook")
+                
+                script = Script(content=script_content, user_id=current_user.id)
+                db.session.add(script)
+                
+                current_user.scripts_generated += 1
+                db.session.commit()
+                
+                if form.generate_audio.data:
+                    try:
+                        audio_filename = f"audio_{script.id}.mp3"
+                        audio_path = os.path.join(app.config['UPLOAD_FOLDER'], audio_filename)
+                        
+                        user_voice_filename = request.form.get('user_voice_filename')
+                        if user_voice_filename:
+                            user_voice_path = os.path.join(app.config['UPLOAD_FOLDER'], user_voice_filename)
+                            audio_response = openai_client.audio.speech.create(
+                                model="tts-1",
+                                voice="alloy",
+                                input=script_content,
+                                voice_file=user_voice_path
+                            )
+                        else:
+                            audio_response = openai_client.audio.speech.create(
+                                model="tts-1",
+                                voice="alloy",
+                                input=script_content
+                            )
+                        
+                        with open(audio_path, "wb") as audio_file:
+                            audio_file.write(audio_response.content)
+                        
+                        script.audio_file = audio_filename
+                        db.session.commit()
+                        
+                        return redirect(url_for('view_script', script_id=script.id, audio=True))
+                    except Exception as e:
+                        flash(f"Error generating audio: {str(e)}", "error")
+                        return redirect(url_for('view_script', script_id=script.id))
+                
+                return redirect(url_for('view_script', script_id=script.id))
             except Exception as e:
                 flash(f"Error generating script: {str(e)}", "error")
                 return redirect(url_for('generate_script'))
-            
-            script = Script(content=script_content, user_id=current_user.id)
-            db.session.add(script)
-            
-            current_user.scripts_generated += 1
-            db.session.commit()
-            
-            if form.generate_audio.data:
-                try:
-                    audio_filename = f"audio_{script.id}.mp3"
-                    audio_path = os.path.join(app.config['UPLOAD_FOLDER'], audio_filename)
-                    
-                    user_voice_filename = request.form.get('user_voice_filename')
-                    if user_voice_filename:
-                        user_voice_path = os.path.join(app.config['UPLOAD_FOLDER'], user_voice_filename)
-                        audio_response = openai_client.audio.speech.create(
-                            model="tts-1",
-                            voice="alloy",
-                            input=script_content,
-                            voice_file=user_voice_path
-                        )
-                    else:
-                        audio_response = openai_client.audio.speech.create(
-                            model="tts-1",
-                            voice="alloy",
-                            input=script_content
-                        )
-                    
-                    with open(audio_path, "wb") as audio_file:
-                        audio_file.write(audio_response.content)
-                    
-                    script.audio_file = audio_filename
-                    db.session.commit()
-                    
-                    return redirect(url_for('view_script', script_id=script.id, audio=True))
-                except Exception as e:
-                    flash(f"Error generating audio: {str(e)}", "error")
-                    return redirect(url_for('view_script', script_id=script.id))
-            
-            return redirect(url_for('view_script', script_id=script.id))
         return render_template('generate_script.html', title='Generate Script', form=form)
     else:
         flash('You have reached the limit of free script generations. Please subscribe to continue.', 'warning')
