@@ -112,7 +112,6 @@ def generate_script():
                     user_voice_filename = request.form.get('user_voice_filename')
                     if user_voice_filename:
                         user_voice_path = os.path.join(app.config['UPLOAD_FOLDER'], user_voice_filename)
-                        # Use the user's voice recording to generate the audio
                         audio_response = openai.audio.speech.create(
                             model="tts-1",
                             voice="alloy",
@@ -120,7 +119,6 @@ def generate_script():
                             voice_file=user_voice_path
                         )
                     else:
-                        # Use the default TTS if no user voice recording
                         audio_response = openai.audio.speech.create(
                             model="tts-1",
                             voice="alloy",
@@ -152,6 +150,53 @@ def view_script(script_id):
         flash('You do not have permission to view this script.', 'error')
         return redirect(url_for('profile'))
     return render_template('view_script.html', title='View Script', script=script)
+
+@app.route('/record_voice/<int:script_id>', methods=['POST'])
+@login_required
+def record_voice_for_script(script_id):
+    script = Script.query.get_or_404(script_id)
+    if script.user_id != current_user.id:
+        return jsonify({'success': False, 'error': 'You do not have permission to modify this script.'}), 403
+    
+    if 'user_voice_filename' not in request.files:
+        return jsonify({'success': False, 'error': 'No audio file provided'}), 400
+    
+    audio_file = request.files['user_voice_filename']
+    if audio_file.filename == '':
+        return jsonify({'success': False, 'error': 'No selected file'}), 400
+    
+    if audio_file:
+        filename = secure_filename(f"user_voice_{current_user.id}_{script_id}_{datetime.now().strftime('%Y%m%d%H%M%S')}.webm")
+        audio_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        audio_file.save(audio_path)
+        
+        try:
+            audio_response = openai.audio.speech.create(
+                model="tts-1",
+                voice="alloy",
+                input=script.content,
+                voice_file=audio_path
+            )
+            
+            new_audio_filename = f"audio_{script.id}_{datetime.now().strftime('%Y%m%d%H%M%S')}.mp3"
+            new_audio_path = os.path.join(app.config['UPLOAD_FOLDER'], new_audio_filename)
+            
+            with open(new_audio_path, "wb") as audio_file:
+                audio_file.write(audio_response.content)
+            
+            if script.audio_file:
+                old_audio_path = os.path.join(app.config['UPLOAD_FOLDER'], script.audio_file)
+                if os.path.exists(old_audio_path):
+                    os.remove(old_audio_path)
+            
+            script.audio_file = new_audio_filename
+            db.session.commit()
+            
+            return jsonify({'success': True, 'message': 'Voice recording saved and new audio generated successfully'}), 200
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 500
+    
+    return jsonify({'success': False, 'error': 'Failed to save audio file'}), 500
 
 @app.route('/get_audio/<int:script_id>')
 @login_required
