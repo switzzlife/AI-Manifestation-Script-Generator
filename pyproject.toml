@@ -13,4 +13,5 @@ dependencies = [
     "flask-wtf>=1.2.1",
     "stripe>=11.1.0",
     "flask-migrate>=4.0.7",
+    "requests>=2.32.3",
 ]

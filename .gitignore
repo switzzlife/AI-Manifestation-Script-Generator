@@ -60,3 +60,6 @@ static/uploads/
 
 # Temporary files
 *.tmp
+
+# Secrets
+.env

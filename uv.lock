@@ -584,6 +584,7 @@ dependencies = [
     { name = "flask-wtf" },
     { name = "openai" },
     { name = "psycopg2-binary" },
+    { name = "requests" },
     { name = "stripe" },
 ]
 
@@ -597,6 +598,7 @@ requires-dist = [
     { name = "flask-wtf", specifier = ">=1.2.1" },
     { name = "openai", specifier = ">=1.51.2" },
     { name = "psycopg2-binary", specifier = ">=2.9.10" },
+    { name = "requests", specifier = ">=2.32.3" },
     { name = "stripe", specifier = ">=11.1.0" },
 ]
 
