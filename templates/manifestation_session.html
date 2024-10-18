@@ -43,6 +43,12 @@
                     Your browser does not support the audio element.
                 </audio>
             </div>
+            <div id="background-audio-player" class="mb-3">
+                <audio loop id="background-audio">
+                    <source src="" type="audio/mpeg">
+                    Your browser does not support the audio element.
+                </audio>
+            </div>
             <ul class="list-group">
                 {% for script in scripts %}
                 <li class="list-group-item d-flex justify-content-between align-items-center">
@@ -60,6 +66,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const audioPlayer = document.getElementById('manifestation-audio');
+    const backgroundAudio = document.getElementById('background-audio');
     const playButtons = document.querySelectorAll('.play-audio');
     const volumeRange = document.getElementById('volume-range');
     const volumeValue = document.getElementById('volume-value');
@@ -67,12 +74,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const speedRange = document.getElementById('speed-range');
     const speedValue = document.getElementById('speed-value');
     const speedInput = document.getElementById('speed-input');
+    const backgroundMusicSelect = document.getElementById('background_music');
     
     playButtons.forEach(button => {
         button.addEventListener('click', function() {
             const scriptId = this.getAttribute('data-script-id');
             audioPlayer.src = `/get_audio/${scriptId}`;
             audioPlayer.play();
+            if (backgroundMusicSelect.value !== 'none') {
+                backgroundAudio.play();
+            }
         });
     });
 
@@ -89,6 +100,22 @@ document.addEventListener('DOMContentLoaded', function() {
         speedInput.value = value;
         audioPlayer.playbackRate = value;
     });
+
+    backgroundMusicSelect.addEventListener('change', function() {
+        const selectedMusic = this.value;
+        if (selectedMusic === 'none') {
+            backgroundAudio.pause();
+            backgroundAudio.src = '';
+        } else {
+            backgroundAudio.src = `/get_background_music/${selectedMusic}.mp3`;
+            backgroundAudio.play();
+        }
+    });
+
+    // Set initial background music
+    if (backgroundMusicSelect.value !== 'none') {
+        backgroundAudio.src = `/get_background_music/${backgroundMusicSelect.value}.mp3`;
+    }
 });
 </script>
 {% endblock %}

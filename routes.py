@@ -274,8 +274,7 @@ def manifestation_session():
         script_id = int(form.script.data)
         script = Script.query.get(script_id)
         if script and script.user_id == current_user.id:
-            # Here we would typically process the audio file with the selected customizations
-            # For now, we'll just save the customization preferences
+            # Save the customization preferences
             script.background_music = form.background_music.data
             script.volume = form.volume.data
             script.playback_speed = form.playback_speed.data
@@ -286,3 +285,8 @@ def manifestation_session():
         return redirect(url_for('manifestation_session'))
     
     return render_template('manifestation_session.html', title='Manifestation Session', form=form, scripts=scripts_with_audio)
+
+@app.route('/get_background_music/<filename>')
+@login_required
+def get_background_music(filename):
+    return send_file(f'static/audio/{filename}', as_attachment=True)
