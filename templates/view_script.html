@@ -94,24 +94,35 @@ document.addEventListener('DOMContentLoaded', function() {
     function saveRecording(e) {
         e.preventDefault();
         const formData = new FormData(voiceRecordingForm);
-        formData.append('audio', recorder.getBlob(), 'user_voice.wav');
+        const blob = recorder.getBlob();
+        formData.append('audio', blob, 'user_voice.wav');
         
+        console.log('FormData contents:');
+        for (let [key, value] of formData.entries()) {
+            console.log(key, value);
+        }
+
         fetch('/record_voice', {
             method: 'POST',
             body: formData
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 userVoiceFilename.value = data.filename;
                 alert('Voice recording saved successfully!');
             } else {
-                alert('Error saving voice recording: ' + data.error);
+                throw new Error(data.error || 'Unknown error occurred');
             }
         })
         .catch(error => {
             console.error('Error uploading voice recording:', error);
-            alert('Error uploading voice recording. Please try again.');
+            alert('Error uploading voice recording: ' + error.message);
         });
     }
 });
