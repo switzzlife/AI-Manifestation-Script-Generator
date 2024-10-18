@@ -1,6 +1,7 @@
 import os
 import stripe
 import logging
+import requests
 from flask import render_template, flash, redirect, url_for, request, jsonify, send_file, current_app
 from flask_login import current_user, login_user, logout_user, login_required
 from urllib.parse import urlparse
@@ -111,6 +112,19 @@ def record_voice():
     logging.error("Invalid request: missing audio file or script_id")
     return jsonify({'error': 'Invalid request'}), 400
 
+def send_webhook_request(prompt):
+    webhook_url = os.environ.get("SCRIPT_GENERATION_WEBHOOK_URL")
+    if not webhook_url:
+        raise ValueError("SCRIPT_GENERATION_WEBHOOK_URL environment variable is not set")
+    
+    payload = {"prompt": prompt}
+    response = requests.post(webhook_url, json=payload)
+    
+    if response.status_code == 200:
+        return response.json().get("script_content")
+    else:
+        raise Exception(f"Webhook request failed with status code {response.status_code}")
+
 @app.route('/generate_script', methods=['GET', 'POST'])
 @login_required
 def generate_script():
@@ -122,7 +136,12 @@ def generate_script():
         form = ScriptGenerationForm()
         if form.validate_on_submit():
             prompt = f"Generate a {form.duration.data}-minute guided manifestation instruction for {form.goal.data}. Focus on {form.focus.data}. Use a {form.tone.data} tone, incorporate {form.visualization.data} visualization, and use {form.affirmation_style.data} affirmations. Make sure the result is conversation, add '...' between sentences where you think the reader should pause or talk slowly. Make sure the result is something that I can send directly to a TTS program and it will read it out loud for the user."
-            script_content = send_openai_request(prompt)
+            
+            try:
+                script_content = send_webhook_request(prompt)
+            except Exception as e:
+                flash(f"Error generating script: {str(e)}", "error")
+                return redirect(url_for('generate_script'))
             
             script = Script(content=script_content, user_id=current_user.id)
             db.session.add(script)
