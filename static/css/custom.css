@@ -4,16 +4,13 @@ body {
 }
 
 .profile-photo {
-    max-width: 50px;
-    max-height: 50px;
+    max-width: 150px;
+    max-height: 150px;
     border-radius: 50%;
 }
 
 .script-card {
     margin-bottom: 20px;
-    border: 1px solid #ccc;
-    border-radius: 0.25rem;
-    background: #fff;
 }
 
 .community-post {
@@ -27,11 +24,4 @@ body {
     margin-left: 20px;
     border-left: 3px solid var(--bs-border-color);
     padding-left: 10px;
-}
-
-.card-text {
-    color:black;
-}
-.card-title {
-    color:black;
 }
