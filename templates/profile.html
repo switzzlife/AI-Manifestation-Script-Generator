@@ -6,10 +6,6 @@
         <img src="{{ url_for('static', filename='uploads/' + current_user.profile_photo) }}" alt="Profile Photo" class="img-fluid rounded-circle mb-3">
         <h2>{{ current_user.username }}</h2>
         <p>Email: {{ current_user.email }}</p>
-        <p>Account Type: {% if current_user.is_paid %}Premium{% else %}Free{% endif %}</p>
-        {% if not current_user.is_paid %}
-            <a href="{{ url_for('subscribe') }}" class="btn btn-primary">Upgrade to Premium</a>
-        {% endif %}
     </div>
     <div class="col-md-8">
         <h3>Your Generated Scripts</h3>
