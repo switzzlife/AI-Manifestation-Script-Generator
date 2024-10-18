@@ -1,3 +1,4 @@
+import os
 import stripe
 import logging
 from flask import render_template, flash, redirect, url_for, request, jsonify, send_file, current_app
@@ -7,7 +8,6 @@ from app import app, db
 from models import User, Script, Post, Comment, Subscription
 from forms import LoginForm, RegistrationForm, ScriptGenerationForm, PostForm, CommentForm, AudioCustomizationForm
 from werkzeug.utils import secure_filename
-import os
 from datetime import datetime, timedelta
 from chat_request import send_openai_request
 import openai
@@ -79,19 +79,25 @@ def record_voice():
         return jsonify({'error': 'No selected file'}), 400
     
     if audio_file and script_id:
-        script = Script.query.get(script_id)
-        if script and script.user_id == current_user.id:
-            filename = secure_filename(f"user_voice_{current_user.id}_{script_id}_{datetime.now().strftime('%Y%m%d%H%M%S')}.wav")
-            audio_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            audio_file.save(audio_path)
-            
-            # Update the script with the new audio file
-            script.audio_file = filename
-            db.session.commit()
-            
-            return jsonify({'success': True, 'filename': filename}), 200
+        try:
+            script = Script.query.get(script_id)
+            if script and script.user_id == current_user.id:
+                filename = secure_filename(f"user_voice_{current_user.id}_{script_id}_{datetime.now().strftime('%Y%m%d%H%M%S')}.wav")
+                audio_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+                audio_file.save(audio_path)
+                
+                # Update the script with the new audio file
+                script.audio_file = filename
+                db.session.commit()
+                
+                return jsonify({'success': True, 'filename': filename}), 200
+            else:
+                return jsonify({'error': 'Invalid script or unauthorized access'}), 403
+        except Exception as e:
+            logging.error(f"Error saving audio file: {str(e)}")
+            return jsonify({'error': f'Failed to save audio file: {str(e)}'}), 500
     
-    return jsonify({'error': 'Failed to save audio file'}), 500
+    return jsonify({'error': 'Invalid request'}), 400
 
 @app.route('/generate_script', methods=['GET', 'POST'])
 @login_required
