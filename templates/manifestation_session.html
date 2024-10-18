@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', function() {
         audioPlayer.volume = volumeRange.value;
         backgroundAudio.volume = backgroundVolumeRange.value;
         audioPlayer.playbackRate = speedRange.value;
-        backgroundAudio.playbackRate = speedRange.value;
+        // Removed: backgroundAudio.playbackRate = speedRange.value;
     }
 
     function playAudio() {
@@ -163,7 +163,7 @@ document.addEventListener('DOMContentLoaded', function() {
         speedValue.textContent = `${value}x`;
         speedInput.value = value;
         audioPlayer.playbackRate = value;
-        backgroundAudio.playbackRate = value;
+        // Removed: backgroundAudio.playbackRate = value;
     });
 
     backgroundMusicSelect.addEventListener('change', function() {
