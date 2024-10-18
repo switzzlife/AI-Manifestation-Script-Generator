@@ -117,7 +117,7 @@ def generate_script():
                             model="tts-1",
                             voice="alloy",
                             input=script_content,
-                            voice_file=open(user_voice_path, "rb")
+                            voice_file=user_voice_path
                         )
                     else:
                         # Use the default TTS if no user voice recording
