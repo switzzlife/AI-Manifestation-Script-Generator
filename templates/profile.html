@@ -11,13 +11,22 @@
         <h3>Your Generated Scripts</h3>
         {% if scripts %}
             {% for script in scripts %}
-                <div class="card script-card">
+                <div class="card script-card mb-3">
                     <div class="card-body">
                         <h5 class="card-title">Script #{{ script.id }}</h5>
                         <p class="card-text">{{ script.content[:200] }}...</p>
                         <p class="card-text"><small class="text-muted">Generated on: {{ script.created_at.strftime('%Y-%m-%d %H:%M') }}</small></p>
                         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#scriptModal{{ script.id }}">View Full Script</button>
                         <button class="btn btn-danger delete-script" data-script-id="{{ script.id }}">Delete Script</button>
+                        {% if not script.audio_file %}
+                            <form action="{{ url_for('view_script', script_id=script.id) }}" method="post" class="d-inline">
+                                {{ form.csrf_token }}
+                                <input type="hidden" name="generate_audio" value="1">
+                                <button type="submit" class="btn btn-success">Generate Audio</button>
+                            </form>
+                        {% else %}
+                            <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#audioModal{{ script.id }}">Play Audio</button>
+                        {% endif %}
                     </div>
                 </div>
 
@@ -38,17 +47,38 @@
                                             <source src="{{ url_for('get_audio', script_id=script.id) }}" type="audio/mpeg">
                                             Your browser does not support the audio element.
                                         </audio>
+                                    {% else %}
+                                        <form action="{{ url_for('view_script', script_id=script.id) }}" method="post">
+                                            {{ form.csrf_token }}
+                                            <input type="hidden" name="generate_audio" value="1">
+                                            <button type="submit" class="btn btn-success">Generate Audio</button>
+                                        </form>
                                     {% endif %}
-                                    <form action="{{ url_for('view_script', script_id=script.id) }}" method="post">
-                                        {{ form.csrf_token }}
-                                        <input type="hidden" name="generate_audio" value="1">
-                                        <button type="submit" class="btn btn-success">Generate Audio</button>
-                                    </form>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Modal for audio playback -->
+                {% if script.audio_file %}
+                <div class="modal fade" id="audioModal{{ script.id }}" tabindex="-1" aria-labelledby="audioModalLabel{{ script.id }}" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="audioModalLabel{{ script.id }}">Audio for Script #{{ script.id }}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <audio controls class="w-100">
+                                    <source src="{{ url_for('get_audio', script_id=script.id) }}" type="audio/mpeg">
+                                    Your browser does not support the audio element.
+                                </audio>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
             {% endfor %}
         {% else %}
             <p>You haven't generated any scripts yet. <a href="{{ url_for('generate_script') }}">Generate your first script!</a></p>
