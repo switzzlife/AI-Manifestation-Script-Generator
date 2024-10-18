@@ -54,7 +54,7 @@ class AudioCustomizationForm(FlaskForm):
     volume = FloatField('Main Audio Volume', validators=[DataRequired(), NumberRange(min=0, max=1)])
     background_volume = FloatField('Background Music Volume', validators=[DataRequired(), NumberRange(min=0, max=1)])
     playback_speed = FloatField('Playback Speed', validators=[DataRequired(), NumberRange(min=0.5, max=2)])
-    submit = SubmitField('Start session')
+    submit = SubmitField('Apply Customization')
 
     def __init__(self, *args, **kwargs):
         super(AudioCustomizationForm, self).__init__(*args, **kwargs)
