@@ -67,7 +67,6 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/recordrtc/RecordRTC.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     let recorder;
@@ -84,7 +83,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function startRecording() {
         navigator.mediaDevices.getUserMedia({ audio: true })
             .then(function(stream) {
-                recorder = RecordRTC(stream, {
+                recorder = new RecordRTC(stream, {
                     type: 'audio',
                     mimeType: 'audio/webm',
                     sampleRate: 44100,
