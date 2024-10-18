@@ -64,7 +64,8 @@ def register():
 @login_required
 def profile():
     scripts = Script.query.filter_by(user_id=current_user.id).order_by(Script.created_at.desc()).all()
-    return render_template('profile.html', user=current_user, scripts=scripts)
+    form = ScriptGenerationForm()
+    return render_template('profile.html', user=current_user, scripts=scripts, form=form)
 
 @app.route('/record_voice', methods=['POST'])
 @login_required
