@@ -264,6 +264,12 @@ def manifestation_session():
     
     form.script.choices = [(str(script.id), f"Script #{script.id}") for script in scripts_with_audio]
     
+    # Set default values for form fields
+    if form.volume.data is None:
+        form.volume.data = 0.5  # Default to 50% volume
+    if form.playback_speed.data is None:
+        form.playback_speed.data = 1.0  # Default to normal speed
+    
     if form.validate_on_submit():
         script_id = int(form.script.data)
         script = Script.query.get(script_id)
