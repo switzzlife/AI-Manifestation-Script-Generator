@@ -154,38 +154,6 @@ def generate_script():
                 current_user.scripts_generated += 1
                 db.session.commit()
                 
-                if form.generate_audio.data:
-                    try:
-                        audio_filename = f"audio_{script.id}.mp3"
-                        audio_path = os.path.join(app.config['UPLOAD_FOLDER'], audio_filename)
-                        
-                        user_voice_filename = request.form.get('user_voice_filename')
-                        if user_voice_filename:
-                            user_voice_path = os.path.join(app.config['UPLOAD_FOLDER'], user_voice_filename)
-                            audio_response = openai_client.audio.speech.create(
-                                model="tts-1",
-                                voice="alloy",
-                                input=script_content,
-                                voice_file=user_voice_path
-                            )
-                        else:
-                            audio_response = openai_client.audio.speech.create(
-                                model="tts-1",
-                                voice="alloy",
-                                input=script_content
-                            )
-                        
-                        with open(audio_path, "wb") as audio_file:
-                            audio_file.write(audio_response.content)
-                        
-                        script.audio_file = audio_filename
-                        db.session.commit()
-                        
-                        return redirect(url_for('view_script', script_id=script.id, audio=True))
-                    except Exception as e:
-                        flash(f"Error generating audio: {str(e)}", "error")
-                        return redirect(url_for('view_script', script_id=script.id))
-                
                 return redirect(url_for('view_script', script_id=script.id))
             except Exception as e:
                 flash(f"Error generating script: {str(e)}", "error")
@@ -195,13 +163,46 @@ def generate_script():
         flash('You have reached the limit of free script generations. Please subscribe to continue.', 'warning')
         return redirect(url_for('subscribe', next='generate_script'))
 
-@app.route('/view_script/<int:script_id>')
+@app.route('/view_script/<int:script_id>', methods=['GET', 'POST'])
 @login_required
 def view_script(script_id):
     script = Script.query.get_or_404(script_id)
     if script.user_id != current_user.id:
         flash('You do not have permission to view this script.', 'error')
         return redirect(url_for('profile'))
+    
+    if request.method == 'POST':
+        if 'generate_audio' in request.form:
+            try:
+                audio_filename = f"audio_{script.id}.mp3"
+                audio_path = os.path.join(app.config['UPLOAD_FOLDER'], audio_filename)
+                
+                user_voice_filename = request.form.get('user_voice_filename')
+                if user_voice_filename:
+                    user_voice_path = os.path.join(app.config['UPLOAD_FOLDER'], user_voice_filename)
+                    audio_response = openai_client.audio.speech.create(
+                        model="tts-1",
+                        voice="alloy",
+                        input=script.content,
+                        voice_file=user_voice_path
+                    )
+                else:
+                    audio_response = openai_client.audio.speech.create(
+                        model="tts-1",
+                        voice="alloy",
+                        input=script.content
+                    )
+                
+                with open(audio_path, "wb") as audio_file:
+                    audio_file.write(audio_response.content)
+                
+                script.audio_file = audio_filename
+                db.session.commit()
+                
+                flash('Audio generated successfully!', 'success')
+            except Exception as e:
+                flash(f"Error generating audio: {str(e)}", "error")
+    
     return render_template('view_script.html', title='View Script', script=script)
 
 @app.route('/get_audio/<int:script_id>')

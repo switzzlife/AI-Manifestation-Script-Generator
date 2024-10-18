@@ -15,6 +15,11 @@
                     Your browser does not support the audio element.
                 </audio>
             </div>
+            {% else %}
+            <form action="{{ url_for('view_script', script_id=script.id) }}" method="post" class="mt-3">
+                <input type="hidden" name="generate_audio" value="1">
+                <button type="submit" class="btn btn-primary">Generate Audio</button>
+            </form>
             {% endif %}
             <div class="mt-3">
                 <h5>Record Your Voice</h5>
