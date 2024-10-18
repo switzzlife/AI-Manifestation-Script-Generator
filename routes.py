@@ -11,6 +11,7 @@ import os
 from datetime import datetime, timedelta
 from chat_request import send_openai_request
 import openai
+from flask_wtf.csrf import csrf_protect
 
 stripe.api_key = app.config['STRIPE_SECRET_KEY']
 openai.api_key = os.environ.get("OPENAI_API_KEY")
@@ -153,6 +154,7 @@ def view_script(script_id):
 
 @app.route('/record_voice/<int:script_id>', methods=['POST'])
 @login_required
+@csrf_protect
 def record_voice_for_script(script_id):
     script = Script.query.get_or_404(script_id)
     if script.user_id != current_user.id:
@@ -175,7 +177,7 @@ def record_voice_for_script(script_id):
                 model="tts-1",
                 voice="alloy",
                 input=script.content,
-                voice_file=audio_path
+                file=audio_path
             )
             
             new_audio_filename = f"audio_{script.id}_{datetime.now().strftime('%Y%m%d%H%M%S')}.mp3"

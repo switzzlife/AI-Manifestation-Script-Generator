@@ -26,8 +26,8 @@
             <span id="recordingStatus" class="ms-2"></span>
         </div>
         <audio id="audioPlayback" controls class="mt-2 d-none"></audio>
-        <form id="voiceRecordingForm" action="{{ url_for('record_voice', script_id=script.id) }}" method="post" enctype="multipart/form-data">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <form id="voiceRecordingForm" action="{{ url_for('record_voice_for_script', script_id=script.id) }}" method="post" enctype="multipart/form-data">
+            {{ form.csrf_token }}
             <input type="hidden" id="userVoiceFilename" name="user_voice_filename">
             <button type="submit" id="saveRecording" class="btn btn-success mt-2 d-none">Save Recording</button>
         </form>
@@ -101,7 +101,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         fetch(this.action, {
             method: 'POST',
-            body: formData
+            body: formData,
+            headers: {
+                'X-CSRFToken': '{{ csrf_token() }}'
+            }
         })
         .then(response => response.json())
         .then(data => {
