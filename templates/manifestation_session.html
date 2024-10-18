@@ -43,12 +43,6 @@
                 {{ form.submit(class="btn btn-primary", id="apply-customization") }}
                 <button type="button" class="btn btn-secondary" id="pause-button">Pause</button>
             </form>
-            <div id="audio-player" class="mt-4">
-                <audio controls id="manifestation-audio">
-                    <source src="" type="audio/mpeg">
-                    Your browser does not support the audio element.
-                </audio>
-            </div>
             <div id="background-audio-player" class="mt-2">
                 <audio loop id="background-audio">
                     <source src="" type="audio/mpeg">
@@ -69,7 +63,7 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const audioPlayer = document.getElementById('manifestation-audio');
+    const audioPlayer = new Audio();
     const backgroundAudio = document.getElementById('background-audio');
     const volumeRange = document.getElementById('volume-range');
     const volumeValue = document.getElementById('volume-value');
