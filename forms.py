@@ -1,3 +1,4 @@
+import os
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField, SelectField, FloatField
 from wtforms.validators import DataRequired, Email, EqualTo, ValidationError, Length, NumberRange
@@ -49,13 +50,14 @@ class CommentForm(FlaskForm):
 
 class AudioCustomizationForm(FlaskForm):
     script = SelectField('Select Script', validators=[DataRequired()])
-    background_music = SelectField('Background Music', choices=[
-        ('nature', 'Nature Sounds'),
-        ('meditation', 'Meditation Music'),
-        ('ambient', 'Ambient Sounds'),
-        ('none', 'No Background Music')
-    ], validators=[DataRequired()])
+    background_music = SelectField('Background Music', validators=[DataRequired()])
     volume = FloatField('Main Audio Volume', validators=[DataRequired(), NumberRange(min=0, max=1)])
     background_volume = FloatField('Background Music Volume', validators=[DataRequired(), NumberRange(min=0, max=1)])
     playback_speed = FloatField('Playback Speed', validators=[DataRequired(), NumberRange(min=0.5, max=2)])
     submit = SubmitField('Apply Customization')
+
+    def __init__(self, *args, **kwargs):
+        super(AudioCustomizationForm, self).__init__(*args, **kwargs)
+        audio_folder = os.path.join('static', 'audio')
+        audio_files = [f for f in os.listdir(audio_folder) if f.endswith('.mp3')]
+        self.background_music.choices = [('none', 'No Background Music')] + [(f, f) for f in audio_files]

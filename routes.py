@@ -290,7 +290,8 @@ def manifestation_session():
 @app.route('/get_background_music/<filename>')
 @login_required
 def get_background_music(filename):
-    return send_file(f'static/audio/{filename}', as_attachment=True)
+    audio_folder = os.path.join(current_app.static_folder, 'audio')
+    return send_file(os.path.join(audio_folder, filename), as_attachment=True)
 
 @app.route('/delete_script/<int:script_id>', methods=['POST'])
 @login_required
