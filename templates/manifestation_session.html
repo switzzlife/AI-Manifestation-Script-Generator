@@ -41,6 +41,7 @@
                     {{ form.playback_speed(type="hidden", id="speed-input") }}
                 </div>
                 {{ form.submit(class="btn btn-primary", id="apply-customization") }}
+                <button type="button" class="btn btn-secondary" id="pause-button">Pause</button>
             </form>
         </div>
         <div class="col-md-6">
@@ -93,9 +94,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const speedInput = document.getElementById('speed-input');
     const backgroundMusicSelect = document.getElementById('background_music');
     const applyCustomizationBtn = document.getElementById('apply-customization');
+    const pauseButton = document.getElementById('pause-button');
     const loadingIndicator = document.getElementById('loading-indicator');
     const scriptSelect = document.getElementById('script');
     
+    let isPlaying = false;
+
     function updateAudioSettings() {
         audioPlayer.volume = volumeRange.value;
         backgroundAudio.volume = backgroundVolumeRange.value;
@@ -116,12 +120,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 backgroundAudio.play();
             }
             updateAudioSettings();
+            isPlaying = true;
+            pauseButton.textContent = 'Pause';
         };
 
         audioPlayer.onerror = function() {
             loadingIndicator.classList.add('d-none');
             alert('Error loading audio. Please try again.');
         };
+    }
+
+    function togglePause() {
+        if (isPlaying) {
+            audioPlayer.pause();
+            backgroundAudio.pause();
+            pauseButton.textContent = 'Resume';
+        } else {
+            audioPlayer.play();
+            if (backgroundMusicSelect.value !== 'none') {
+                backgroundAudio.play();
+            }
+            pauseButton.textContent = 'Pause';
+        }
+        isPlaying = !isPlaying;
     }
 
     applyCustomizationBtn.addEventListener('click', function(e) {
@@ -132,6 +153,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         playAudio();
     });
+
+    pauseButton.addEventListener('click', togglePause);
 
     volumeRange.addEventListener('input', function() {
         const value = this.value;
@@ -171,6 +194,11 @@ document.addEventListener('DOMContentLoaded', function() {
             scriptSelect.value = scriptId;
             playAudio();
         });
+    });
+
+    audioPlayer.addEventListener('ended', function() {
+        isPlaying = false;
+        pauseButton.textContent = 'Play';
     });
 });
 </script>
