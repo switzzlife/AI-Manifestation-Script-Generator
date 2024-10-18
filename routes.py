@@ -255,18 +255,6 @@ def my_audio_files():
     scripts_with_audio = Script.query.filter_by(user_id=current_user.id).filter(Script.audio_file.isnot(None)).order_by(Script.created_at.desc()).all()
     return render_template('my_audio_files.html', title='My Audio Files', scripts=scripts_with_audio)
 
-@app.route('/upload_background_music', methods=['POST'])
-@login_required
-def upload_background_music():
-    form = AudioCustomizationForm()
-    if form.validate_on_submit() and form.custom_background_music.data:
-        filename = secure_filename(form.custom_background_music.data.filename)
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], 'background_music', filename)
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
-        form.custom_background_music.data.save(file_path)
-        return jsonify({'success': True, 'filename': filename})
-    return jsonify({'success': False, 'error': 'Invalid file'}), 400
-
 @app.route('/manifestation_session', methods=['GET', 'POST'])
 @login_required
 def manifestation_session():
@@ -276,26 +264,21 @@ def manifestation_session():
     
     form.script.choices = [(str(script.id), f"Script #{script.id}") for script in scripts_with_audio]
     
+    # Set default values for form fields
     if form.volume.data is None:
-        form.volume.data = 0.5
+        form.volume.data = 0.5  # Default to 50% volume
     if form.playback_speed.data is None:
-        form.playback_speed.data = 1.0
+        form.playback_speed.data = 1.0  # Default to normal speed
     
     if form.validate_on_submit():
         script_id = int(form.script.data)
         script = Script.query.get(script_id)
         if script and script.user_id == current_user.id:
+            # Here we would typically process the audio file with the selected customizations
+            # For now, we'll just save the customization preferences
             script.background_music = form.background_music.data
             script.volume = form.volume.data
             script.playback_speed = form.playback_speed.data
-            
-            if form.background_music.data == 'custom' and form.custom_background_music.data:
-                filename = secure_filename(form.custom_background_music.data.filename)
-                file_path = os.path.join(app.config['UPLOAD_FOLDER'], 'background_music', filename)
-                os.makedirs(os.path.dirname(file_path), exist_ok=True)
-                form.custom_background_music.data.save(file_path)
-                script.custom_background_music = filename
-            
             db.session.commit()
             flash('Audio customization applied successfully!', 'success')
         else:

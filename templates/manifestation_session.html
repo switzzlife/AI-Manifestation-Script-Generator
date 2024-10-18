@@ -6,7 +6,7 @@
     <div class="row">
         <div class="col-md-6">
             <h2>Audio Customization</h2>
-            <form method="POST" action="{{ url_for('manifestation_session') }}" enctype="multipart/form-data">
+            <form method="POST" action="{{ url_for('manifestation_session') }}">
                 {{ form.hidden_tag() }}
                 <div class="mb-3">
                     {{ form.script.label(class="form-label") }}
@@ -15,10 +15,6 @@
                 <div class="mb-3">
                     {{ form.background_music.label(class="form-label") }}
                     {{ form.background_music(class="form-select") }}
-                </div>
-                <div class="mb-3" id="custom-background-music-upload" style="display: none;">
-                    {{ form.custom_background_music.label(class="form-label") }}
-                    {{ form.custom_background_music(class="form-control") }}
                 </div>
                 <div class="mb-3">
                     {{ form.volume.label(class="form-label") }}
@@ -47,14 +43,11 @@
                     Your browser does not support the audio element.
                 </audio>
             </div>
-            <audio id="background-audio" loop>
-                <source src="" type="audio/mpeg">
-            </audio>
             <ul class="list-group">
                 {% for script in scripts %}
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     Script #{{ script.id }}
-                    <button class="btn btn-sm btn-primary play-audio" data-script-id="{{ script.id }}" data-background-music="{{ script.background_music }}" data-custom-background-music="{{ script.custom_background_music }}">Play</button>
+                    <button class="btn btn-sm btn-primary play-audio" data-script-id="{{ script.id }}">Play</button>
                 </li>
                 {% endfor %}
             </ul>
@@ -67,7 +60,6 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const audioPlayer = document.getElementById('manifestation-audio');
-    const backgroundAudio = document.getElementById('background-audio');
     const playButtons = document.querySelectorAll('.play-audio');
     const volumeRange = document.getElementById('volume-range');
     const volumeValue = document.getElementById('volume-value');
@@ -75,37 +67,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const speedRange = document.getElementById('speed-range');
     const speedValue = document.getElementById('speed-value');
     const speedInput = document.getElementById('speed-input');
-    const backgroundMusicSelect = document.getElementById('background_music');
-    const customBackgroundMusicUpload = document.getElementById('custom-background-music-upload');
     
-    backgroundMusicSelect.addEventListener('change', function() {
-        if (this.value === 'custom') {
-            customBackgroundMusicUpload.style.display = 'block';
-        } else {
-            customBackgroundMusicUpload.style.display = 'none';
-        }
-    });
-
     playButtons.forEach(button => {
         button.addEventListener('click', function() {
             const scriptId = this.getAttribute('data-script-id');
-            const backgroundMusic = this.getAttribute('data-background-music');
-            const customBackgroundMusic = this.getAttribute('data-custom-background-music');
-            
             audioPlayer.src = `/get_audio/${scriptId}`;
             audioPlayer.play();
-
-            if (backgroundMusic === 'custom' && customBackgroundMusic) {
-                backgroundAudio.src = `/static/uploads/background_music/${customBackgroundMusic}`;
-            } else if (backgroundMusic !== 'none') {
-                backgroundAudio.src = `/static/background_music/${backgroundMusic}.mp3`;
-            } else {
-                backgroundAudio.src = '';
-            }
-
-            if (backgroundAudio.src) {
-                backgroundAudio.play();
-            }
         });
     });
 
@@ -114,7 +81,6 @@ document.addEventListener('DOMContentLoaded', function() {
         volumeValue.textContent = `${Math.round(value * 100)}%`;
         volumeInput.value = value;
         audioPlayer.volume = value;
-        backgroundAudio.volume = value * 0.5; // Set background music volume to half of the main audio
     });
 
     speedRange.addEventListener('input', function() {
@@ -122,14 +88,6 @@ document.addEventListener('DOMContentLoaded', function() {
         speedValue.textContent = `${value}x`;
         speedInput.value = value;
         audioPlayer.playbackRate = value;
-        backgroundAudio.playbackRate = value;
-    });
-
-    // Synchronize background music with main audio
-    audioPlayer.addEventListener('play', () => backgroundAudio.play());
-    audioPlayer.addEventListener('pause', () => backgroundAudio.pause());
-    audioPlayer.addEventListener('seeked', () => {
-        backgroundAudio.currentTime = audioPlayer.currentTime;
     });
 });
 </script>

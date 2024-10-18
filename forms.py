@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField, SelectField, FloatField
 from wtforms.validators import DataRequired, Email, EqualTo, ValidationError, Length, NumberRange
-from flask_wtf.file import FileField, FileAllowed, FileRequired
+from flask_wtf.file import FileField, FileRequired, FileAllowed
 from models import User
 
 class LoginForm(FlaskForm):
@@ -53,10 +53,8 @@ class AudioCustomizationForm(FlaskForm):
         ('nature', 'Nature Sounds'),
         ('meditation', 'Meditation Music'),
         ('ambient', 'Ambient Sounds'),
-        ('none', 'No Background Music'),
-        ('custom', 'Custom Upload')
+        ('none', 'No Background Music')
     ], validators=[DataRequired()])
-    custom_background_music = FileField('Upload Custom Background Music', validators=[FileAllowed(['mp3', 'wav'], 'Audio files only!')])
     volume = FloatField('Volume', validators=[DataRequired(), NumberRange(min=0, max=1)])
     playback_speed = FloatField('Playback Speed', validators=[DataRequired(), NumberRange(min=0.5, max=2)])
     submit = SubmitField('Apply Customization')
