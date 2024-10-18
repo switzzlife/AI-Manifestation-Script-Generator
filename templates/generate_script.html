@@ -3,7 +3,7 @@
 {% block content %}
 <div class="container mt-4">
     <h1>Generate Manifestation Script</h1>
-    <form action="" method="post" novalidate>
+    <form id="scriptForm" action="" method="post" novalidate>
         {{ form.hidden_tag() }}
         <div class="mb-3">
             {{ form.goal.label(class="form-label") }}
@@ -51,7 +51,100 @@
             {{ form.generate_audio(class="form-check-input") }}
             {{ form.generate_audio.label(class="form-check-label") }}
         </div>
+        <div class="mb-3">
+            <label for="voiceRecording" class="form-label">Record Your Voice (Optional)</label>
+            <div class="d-flex align-items-center">
+                <button type="button" id="startRecording" class="btn btn-primary me-2">Start Recording</button>
+                <button type="button" id="stopRecording" class="btn btn-secondary me-2" disabled>Stop Recording</button>
+                <span id="recordingStatus" class="ms-2"></span>
+            </div>
+            <audio id="audioPlayback" controls class="mt-2 d-none"></audio>
+            <input type="hidden" id="userVoiceFilename" name="user_voice_filename">
+        </div>
         {{ form.submit(class="btn btn-primary") }}
     </form>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/recordrtc/RecordRTC.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let recorder;
+    const startButton = document.getElementById('startRecording');
+    const stopButton = document.getElementById('stopRecording');
+    const recordingStatus = document.getElementById('recordingStatus');
+    const audioPlayback = document.getElementById('audioPlayback');
+    const userVoiceFilename = document.getElementById('userVoiceFilename');
+    const scriptForm = document.getElementById('scriptForm');
+
+    startButton.addEventListener('click', startRecording);
+    stopButton.addEventListener('click', stopRecording);
+
+    function startRecording() {
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(function(stream) {
+                recorder = RecordRTC(stream, {
+                    type: 'audio',
+                    mimeType: 'audio/webm',
+                    sampleRate: 44100,
+                    desiredSampRate: 16000,
+                    recorderType: RecordRTC.StereoAudioRecorder,
+                    numberOfAudioChannels: 1
+                });
+                recorder.startRecording();
+                startButton.disabled = true;
+                stopButton.disabled = false;
+                recordingStatus.textContent = 'Recording...';
+            })
+            .catch(function(err) {
+                console.error('Error accessing microphone:', err);
+                alert('Error accessing microphone. Please check your permissions.');
+            });
+    }
+
+    function stopRecording() {
+        recorder.stopRecording(function() {
+            const blob = recorder.getBlob();
+            const audioUrl = URL.createObjectURL(blob);
+            audioPlayback.src = audioUrl;
+            audioPlayback.classList.remove('d-none');
+            
+            startButton.disabled = false;
+            stopButton.disabled = true;
+            recordingStatus.textContent = 'Recording stopped';
+
+            // Send the recorded audio to the server
+            const formData = new FormData();
+            formData.append('audio', blob, 'user_voice.wav');
+            
+            fetch('/record_voice', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    userVoiceFilename.value = data.filename;
+                    console.log('Voice recording saved:', data.filename);
+                } else {
+                    console.error('Error saving voice recording:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error uploading voice recording:', error);
+            });
+        });
+    }
+
+    scriptForm.addEventListener('submit', function(e) {
+        if (userVoiceFilename.value) {
+            const confirmUse = confirm("Do you want to use your recorded voice for the script narration?");
+            if (!confirmUse) {
+                userVoiceFilename.value = '';
+            }
+        }
+    });
+});
+</script>
 {% endblock %}

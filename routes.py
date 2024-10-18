@@ -66,6 +66,25 @@ def profile():
     scripts = Script.query.filter_by(user_id=current_user.id).order_by(Script.created_at.desc()).all()
     return render_template('profile.html', user=current_user, scripts=scripts)
 
+@app.route('/record_voice', methods=['POST'])
+@login_required
+def record_voice():
+    if 'audio' not in request.files:
+        return jsonify({'error': 'No audio file provided'}), 400
+    
+    audio_file = request.files['audio']
+    if audio_file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+    
+    if audio_file:
+        filename = secure_filename(f"user_voice_{current_user.id}_{datetime.now().strftime('%Y%m%d%H%M%S')}.wav")
+        audio_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        audio_file.save(audio_path)
+        
+        return jsonify({'success': True, 'filename': filename}), 200
+    
+    return jsonify({'error': 'Failed to save audio file'}), 500
+
 @app.route('/generate_script', methods=['GET', 'POST'])
 @login_required
 def generate_script():
@@ -90,11 +109,23 @@ def generate_script():
                     audio_filename = f"audio_{script.id}.mp3"
                     audio_path = os.path.join(app.config['UPLOAD_FOLDER'], audio_filename)
                     
-                    audio_response = openai.audio.speech.create(
-                        model="tts-1",
-                        voice="alloy",
-                        input=script_content
-                    )
+                    user_voice_filename = request.form.get('user_voice_filename')
+                    if user_voice_filename:
+                        user_voice_path = os.path.join(app.config['UPLOAD_FOLDER'], user_voice_filename)
+                        # Use the user's voice recording to generate the audio
+                        audio_response = openai.audio.speech.create(
+                            model="tts-1",
+                            voice="alloy",
+                            input=script_content,
+                            voice_file=user_voice_path
+                        )
+                    else:
+                        # Use the default TTS if no user voice recording
+                        audio_response = openai.audio.speech.create(
+                            model="tts-1",
+                            voice="alloy",
+                            input=script_content
+                        )
                     
                     with open(audio_path, "wb") as audio_file:
                         audio_file.write(audio_response.content)
