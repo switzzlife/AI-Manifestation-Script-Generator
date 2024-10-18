@@ -4,7 +4,7 @@
 <div class="container mt-4">
     <h1 class="mb-4">Manifestation Session</h1>
     <div class="row">
-        <div class="col-md-6">
+        <div class="col-12">
             <h2>Audio Customization</h2>
             <form method="POST" action="{{ url_for('manifestation_session') }}" id="customization-form">
                 {{ form.hidden_tag() }}
@@ -43,35 +43,24 @@
                 {{ form.submit(class="btn btn-primary", id="apply-customization") }}
                 <button type="button" class="btn btn-secondary" id="pause-button">Pause</button>
             </form>
-        </div>
-        <div class="col-md-6">
-            <h2>Your Scripts</h2>
-            <div id="audio-player" class="mb-3">
+            <div id="audio-player" class="mt-4">
                 <audio controls id="manifestation-audio">
                     <source src="" type="audio/mpeg">
                     Your browser does not support the audio element.
                 </audio>
             </div>
-            <div id="background-audio-player" class="mb-3">
+            <div id="background-audio-player" class="mt-2">
                 <audio loop id="background-audio">
                     <source src="" type="audio/mpeg">
                     Your browser does not support the audio element.
                 </audio>
             </div>
-            <div id="loading-indicator" class="d-none">
+            <div id="loading-indicator" class="d-none mt-2">
                 <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
                 <span class="ms-2">Preparing audio...</span>
             </div>
-            <ul class="list-group" id="script-list">
-                {% for script in scripts %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    Script #{{ script.id }}
-                    <button class="btn btn-sm btn-primary play-audio" data-script-id="{{ script.id }}">Play</button>
-                </li>
-                {% endfor %}
-            </ul>
         </div>
     </div>
 </div>
@@ -82,7 +71,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     const audioPlayer = document.getElementById('manifestation-audio');
     const backgroundAudio = document.getElementById('background-audio');
-    const playButtons = document.querySelectorAll('.play-audio');
     const volumeRange = document.getElementById('volume-range');
     const volumeValue = document.getElementById('volume-value');
     const volumeInput = document.getElementById('volume-input');
@@ -186,14 +174,6 @@ document.addEventListener('DOMContentLoaded', function() {
             backgroundAudio.src = `/get_background_music/${this.value}.mp3`;
             backgroundAudio.play();
         }
-    });
-
-    playButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const scriptId = this.getAttribute('data-script-id');
-            scriptSelect.value = scriptId;
-            playAudio();
-        });
     });
 
     audioPlayer.addEventListener('ended', function() {
