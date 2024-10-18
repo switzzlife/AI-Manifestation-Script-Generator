@@ -1,63 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mt-4">
-    <h1 class="mb-4">Manifestation Session</h1>
-    <div class="row">
-        <div class="col-12">
-            <h2>Audio Customization</h2>
-            <form method="POST" action="{{ url_for('manifestation_session') }}" id="customization-form">
-                {{ form.hidden_tag() }}
-                <div class="mb-3">
-                    {{ form.script.label(class="form-label") }}
-                    {{ form.script(class="form-select") }}
-                </div>
-                <div class="mb-3">
-                    {{ form.background_music.label(class="form-label") }}
-                    {{ form.background_music(class="form-select") }}
-                </div>
-                <div class="mb-3">
-                    {{ form.volume.label(class="form-label") }}
-                    <div class="d-flex align-items-center">
-                        <input type="range" class="form-range" id="volume-range" min="0" max="1" step="0.05" value="{{ form.volume.data or 0.5 }}">
-                        <span class="ms-2" id="volume-value">{{ ((form.volume.data or 0.5) * 100)|int }}%</span>
-                    </div>
-                    {{ form.volume(type="hidden", id="volume-input") }}
-                </div>
-                <div class="mb-3">
-                    {{ form.background_volume.label(class="form-label") }}
-                    <div class="d-flex align-items-center">
-                        <input type="range" class="form-range" id="background-volume-range" min="0" max="1" step="0.05" value="{{ form.background_volume.data or 0.5 }}">
-                        <span class="ms-2" id="background-volume-value">{{ ((form.background_volume.data or 0.5) * 100)|int }}%</span>
-                    </div>
-                    {{ form.background_volume(type="hidden", id="background-volume-input") }}
-                </div>
-                <div class="mb-3">
-                    {{ form.playback_speed.label(class="form-label") }}
-                    <div class="d-flex align-items-center">
-                        <input type="range" class="form-range" id="speed-range" min="0.5" max="2" step="0.05" value="{{ form.playback_speed.data or 1.0 }}">
-                        <span class="ms-2" id="speed-value">{{ form.playback_speed.data or 1.0 }}x</span>
-                    </div>
-                    {{ form.playback_speed(type="hidden", id="speed-input") }}
-                </div>
-                {{ form.submit(class="btn btn-primary", id="apply-customization") }}
-                <button type="button" class="btn btn-secondary" id="pause-button">Pause</button>
-            </form>
-            <div id="background-audio-player" class="mt-2">
-                <audio loop id="background-audio">
-                    <source src="" type="audio/mpeg">
-                    Your browser does not support the audio element.
-                </audio>
-            </div>
-            <div id="loading-indicator" class="d-none mt-2">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-                <span class="ms-2">Preparing audio...</span>
-            </div>
-        </div>
-    </div>
-</div>
+<!-- Keep the existing content -->
 {% endblock %}
 
 {% block scripts %}
@@ -100,6 +44,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 backgroundAudio.src = `/get_background_music/${backgroundMusicSelect.value}`;
                 backgroundAudio.play().catch(error => {
                     console.error('Error playing background music:', error);
+                    alert('Error playing background music. Please try again or choose a different track.');
                 });
             }
             updateAudioSettings();
@@ -121,7 +66,10 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             audioPlayer.play();
             if (backgroundMusicSelect.value !== 'none') {
-                backgroundAudio.play();
+                backgroundAudio.play().catch(error => {
+                    console.error('Error resuming background music:', error);
+                    alert('Error resuming background music. Please try again.');
+                });
             }
             pauseButton.textContent = 'Pause';
         }
@@ -168,6 +116,7 @@ document.addEventListener('DOMContentLoaded', function() {
             backgroundAudio.src = `/get_background_music/${this.value}`;
             backgroundAudio.play().catch(error => {
                 console.error('Error playing background music:', error);
+                alert('Error playing background music. Please try again or choose a different track.');
             });
         }
     });
@@ -175,6 +124,7 @@ document.addEventListener('DOMContentLoaded', function() {
     audioPlayer.addEventListener('ended', function() {
         isPlaying = false;
         pauseButton.textContent = 'Play';
+        backgroundAudio.pause();
     });
 });
 </script>
