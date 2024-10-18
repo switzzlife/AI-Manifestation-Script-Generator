@@ -29,7 +29,6 @@
                     <input type="hidden" id="userVoiceFilename" name="user_voice_filename">
                     <button type="submit" id="saveRecording" class="btn btn-success" disabled>Save Recording</button>
                 </form>
-                <div id="errorMessage" class="alert alert-danger mt-2 d-none"></div>
             </div>
         </div>
     </div>
@@ -50,7 +49,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const audioPlayback = document.getElementById('audioPlayback');
     const userVoiceFilename = document.getElementById('userVoiceFilename');
     const voiceRecordingForm = document.getElementById('voiceRecordingForm');
-    const errorMessage = document.getElementById('errorMessage');
 
     startButton.addEventListener('click', startRecording);
     stopButton.addEventListener('click', stopRecording);
@@ -72,11 +70,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 stopButton.disabled = false;
                 saveButton.disabled = true;
                 recordingStatus.textContent = 'Recording...';
-                errorMessage.classList.add('d-none');
             })
             .catch(function(err) {
                 console.error('Error accessing microphone:', err);
-                showError('Error accessing microphone. Please check your permissions.');
+                alert('Error accessing microphone. Please check your permissions.');
             });
     }
 
@@ -98,7 +95,7 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         const formData = new FormData(voiceRecordingForm);
         const blob = recorder.getBlob();
-        formData.append('audio', blob, 'user_voice.webm');
+        formData.append('audio', blob, 'user_voice.wav');
         
         console.log('FormData contents:');
         for (let [key, value] of formData.entries()) {
@@ -120,27 +117,16 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 userVoiceFilename.value = data.filename;
-                showSuccess('Voice recording saved successfully!');
-                location.reload();
+                alert('Voice recording saved successfully!');
+                location.reload(); // Reload the page to show the new audio player
             } else {
                 throw new Error(data.error || 'Unknown error occurred');
             }
         })
         .catch(error => {
             console.error('Error uploading voice recording:', error);
-            showError('Error uploading voice recording: ' + error.message);
+            alert('Error uploading voice recording: ' + error.message);
         });
-    }
-
-    function showError(message) {
-        errorMessage.textContent = message;
-        errorMessage.classList.remove('d-none');
-    }
-
-    function showSuccess(message) {
-        errorMessage.textContent = message;
-        errorMessage.classList.remove('d-none', 'alert-danger');
-        errorMessage.classList.add('alert-success');
     }
 });
 </script>
