@@ -1,20 +1,19 @@
 import os
-import stripe
-import logging
 import requests
-from flask import render_template, flash, redirect, url_for, request, jsonify, send_file, current_app
-from flask_login import current_user, login_user, logout_user, login_required
-from urllib.parse import urlparse
+from flask import jsonify, render_template, redirect, url_for, flash, request, send_file, current_app
+from flask_login import login_required, current_user, login_user, logout_user
 from app import app, db
-from models import User, Script, Post, Comment, Subscription
+from models import User, Script, Subscription, Post, Comment
 from forms import LoginForm, RegistrationForm, ScriptGenerationForm, PostForm, CommentForm, AudioCustomizationForm
 from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
-from chat_request import send_openai_request
-import openai
+import stripe
+import logging
+from openai import OpenAI
+from urllib.parse import urlparse
 
 stripe.api_key = app.config['STRIPE_SECRET_KEY']
-openai.api_key = os.environ.get("OPENAI_API_KEY")
+openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
 @app.route('/')
 @app.route('/index')
@@ -121,7 +120,14 @@ def send_webhook_request(prompt):
     response = requests.post(webhook_url, json=payload)
     
     if response.status_code == 200:
-        return response.json().get("script_content")
+        try:
+            json_response = response.json()
+            if 'script_content' in json_response:
+                return json_response['script_content']
+            else:
+                raise ValueError("Unexpected JSON structure in webhook response")
+        except ValueError as e:
+            raise Exception(f"Error parsing JSON from webhook response: {str(e)}")
     else:
         raise Exception(f"Webhook request failed with status code {response.status_code}")
 
@@ -157,14 +163,14 @@ def generate_script():
                     user_voice_filename = request.form.get('user_voice_filename')
                     if user_voice_filename:
                         user_voice_path = os.path.join(app.config['UPLOAD_FOLDER'], user_voice_filename)
-                        audio_response = openai.audio.speech.create(
+                        audio_response = openai_client.audio.speech.create(
                             model="tts-1",
                             voice="alloy",
                             input=script_content,
                             voice_file=user_voice_path
                         )
                     else:
-                        audio_response = openai.audio.speech.create(
+                        audio_response = openai_client.audio.speech.create(
                             model="tts-1",
                             voice="alloy",
                             input=script_content
